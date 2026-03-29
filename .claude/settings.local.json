@@ -1,0 +1,7 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://openrouter.ai/api/v1",
+    "ANTHROPIC_API_KEY": "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",
+    "ANTHROPIC_MODEL": "meta-llama/llama-3.1-8b-instruct:free"
+  }
+}

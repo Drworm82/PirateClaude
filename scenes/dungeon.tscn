@@ -1,0 +1,24 @@
+[gd_scene load_steps=4 format=3 uid="uid://b_dungeon"]
+
+[ext_resource type="Script" path="res://scripts/dungeon.gd" id="1_dungeon"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
+size = Vector2(64, 64)
+
+[node name="Dungeon" type="Node2D"]
+script = ExtResource("1_dungeon")
+
+[node name="TilesContainer" type="Node2D" parent="."]
+
+[node name="TileMap" type="TileMap" parent="."]
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector2(320, 300)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="ExitZone" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ExitZone"]
+shape = SubResource("RectangleShape2D_1")
