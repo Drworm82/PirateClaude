@@ -4,21 +4,24 @@
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
-size = Vector2(64, 64)
+size = Vector2(200, 40)
 
 [node name="Dungeon" type="Node2D"]
 script = ExtResource("1_dungeon")
 
-[node name="TilesContainer" type="Node2D" parent="."]
-
 [node name="TileMap" type="TileMap" parent="."]
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
-position = Vector2(320, 300)
+position = Vector2(640, 640)
+collision_layer = 1
+collision_mask = 1
 
-[node name="Camera2D" type="Camera2D" parent="."]
+[node name="Camera2D" type="Camera2D" parent="Player"]
 
 [node name="ExitZone" type="Area2D" parent="."]
+position = Vector2(640, 940)
+collision_layer = 2
+collision_mask = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ExitZone"]
 shape = SubResource("RectangleShape2D_1")

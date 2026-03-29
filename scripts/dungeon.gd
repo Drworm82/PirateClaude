@@ -4,9 +4,7 @@ class_name Dungeon
 signal player_exited_dungeon
 
 @onready var player: Player = $Player
-@onready var camera: Camera2D = $Camera2D
-@onready var exit_zone: Area2D = $ExitZone
-@onready var exit_zone_shape: CollisionShape2D = $ExitZone/CollisionShape2D
+@onready var camera: Camera2D = $Player/Camera2D
 
 const OCEAN_COLOR := Color(0.102, 0.227, 0.361)
 const LAND_COLOR := Color(0.176, 0.416, 0.31)
@@ -30,16 +28,23 @@ func _ready() -> void:
 		ISLAND_SIZE_TILES * TILE_SIZE,
 		ISLAND_SIZE_TILES * TILE_SIZE
 	)
-	
 	exit_zone_rect = Rect2(
 		(DUNGEON_WIDTH / 2.0 - 4) * TILE_SIZE,
 		(DUNGEON_HEIGHT - 3) * TILE_SIZE,
 		8 * TILE_SIZE,
 		2 * TILE_SIZE
 	)
-	
-	_set_exit_zone_shape()
-	exit_zone.body_entered.connect(_on_exit_zone_body_entered)
+	_center_camera()
+
+func _physics_process(_delta: float) -> void:
+	if not is_instance_valid(player):
+		return
+	var exit_center := Vector2(
+		DUNGEON_WIDTH * TILE_SIZE / 2.0,
+		(DUNGEON_HEIGHT - 2) * TILE_SIZE
+	)
+	if player.global_position.distance_to(exit_center) < 120.0:
+		_exit_dungeon()
 
 func _draw() -> void:
 	var dungeon_rect := Rect2(0, 0, DUNGEON_WIDTH * TILE_SIZE, DUNGEON_HEIGHT * TILE_SIZE)
@@ -50,20 +55,15 @@ func _draw() -> void:
 func setup(p_seed: int, pos: Vector2) -> void:
 	island_seed = p_seed
 	island_pos = pos
-	_center_camera()
-
-func _set_exit_zone_shape() -> void:
-	if exit_zone_shape:
-		exit_zone_shape.shape.size = Vector2(200, 40)
-		exit_zone_shape.position = exit_zone_rect.position + exit_zone_rect.size / 2.0
 
 func _center_camera() -> void:
-	if camera:
-		camera.position = Vector2(DUNGEON_WIDTH, DUNGEON_HEIGHT) * TILE_SIZE / 2.0
-
-func _on_exit_zone_body_entered(body: Node2D) -> void:
-	if body is Player:
-		_exit_dungeon()
+	var cam = $Player/Camera2D
+	if is_instance_valid(cam):
+		pass
+	$Player.position = Vector2(
+		DUNGEON_WIDTH * TILE_SIZE / 2.0,
+		DUNGEON_HEIGHT * TILE_SIZE / 2.0
+	)
 
 func _exit_dungeon() -> void:
 	player.exit_dungeon()
