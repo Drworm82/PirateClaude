@@ -38,6 +38,7 @@ func _ready() -> void:
 	var cam: Camera2D = $Player/Camera2D
 	cam.reset_smoothing()
 	cam.force_update_scroll()
+	$TileMap.clear()
 
 func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(player):

@@ -1,27 +1,28 @@
-[gd_scene load_steps=4 format=3 uid="uid://b_dungeon"]
+[gd_scene format=3 uid="uid://etsc3cpxdjkt"]
 
-[ext_resource type="Script" path="res://scripts/dungeon.gd" id="1_dungeon"]
-[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
+[ext_resource type="Script" uid="uid://cgkqoooecjb52" path="res://scripts/dungeon.gd" id="1_dungeon"]
+[ext_resource type="TileSet" uid="uid://62i3jjh0h0rn" path="res://assets/tilesets/tileset_dungeon.tres" id="2_fpimf"]
+[ext_resource type="PackedScene" uid="uid://bfmo6ho6vcsyl" path="res://scenes/player.tscn" id="2_player"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(200, 40)
 
-[node name="Dungeon" type="Node2D"]
+[node name="Dungeon" type="Node2D" unique_id=182975033]
 script = ExtResource("1_dungeon")
 
-[node name="TileMap" type="TileMap" parent="."]
+[node name="TileMap" type="TileMap" parent="." unique_id=1218955500]
+tile_set = ExtResource("2_fpimf")
+format = 2
+layer_0/tile_data = PackedInt32Array(1179663, 1835008, 48, 1179672, 3604480, 46)
 
-[node name="Player" parent="." instance=ExtResource("2_player")]
+[node name="Player" parent="." unique_id=294458695 instance=ExtResource("2_player")]
 position = Vector2(640, 640)
-collision_layer = 1
-collision_mask = 1
 
-[node name="Camera2D" type="Camera2D" parent="Player"]
+[node name="Camera2D" type="Camera2D" parent="Player" unique_id=2086984482]
 
-[node name="ExitZone" type="Area2D" parent="."]
+[node name="ExitZone" type="Area2D" parent="." unique_id=330865206]
 position = Vector2(640, 940)
 collision_layer = 2
-collision_mask = 1
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="ExitZone"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ExitZone" unique_id=1835605266]
 shape = SubResource("RectangleShape2D_1")

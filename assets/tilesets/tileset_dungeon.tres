@@ -1,0 +1,12 @@
+[gd_resource type="TileSet" format=3 uid="uid://62i3jjh0h0rn"]
+
+[ext_resource type="Texture2D" uid="uid://13pfrgk7g4d8" path="res://assets/sprites/pirates.webp" id="1_iacxi"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_vbhpi"]
+texture = ExtResource("1_iacxi")
+55:46/0 = 0
+28:48/0 = 0
+
+[resource]
+tile_size = Vector2i(32, 32)
+sources/0 = SubResource("TileSetAtlasSource_vbhpi")
