@@ -1,18 +1,18 @@
-[gd_scene load_steps=3 format=3 uid="uid://b_player"]
+[gd_scene format=3 uid="uid://bfmo6ho6vcsyl"]
 
-[ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
+[ext_resource type="Script" uid="uid://dx2vfahbov8ax" path="res://scripts/player.gd" id="1_player"]
+[ext_resource type="Texture2D" uid="uid://13pfrgk7g4d8" path="res://assets/sprites/pirates.webp" id="2_pirates"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_1"]
 radius = 8.0
 
-[node name="Player" type="CharacterBody2D"]
-collision_layer = 1
-collision_mask = 1
+[node name="Player" type="CharacterBody2D" unique_id=599814967]
 script = ExtResource("1_player")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=517658103]
 shape = SubResource("CircleShape2D_1")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-modulate = Color(0.3, 0.6, 0.9, 1)
-scale = Vector2(16, 16)
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=456414826]
+texture = ExtResource("2_pirates")
+region_enabled = true
+region_rect = Rect2(711.0001, 832, 205, 332.00012)
