@@ -39,6 +39,8 @@ func _ready() -> void:
 	cam.reset_smoothing()
 	cam.force_update_scroll()
 	$TileMap.clear()
+	$Boat.player_boarded.connect(_on_player_boarded)
+	$Boat.set_player_ref(player)
 
 func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(player):
@@ -67,6 +69,12 @@ func _center_camera() -> void:
 		DUNGEON_WIDTH * TILE_SIZE,
 		DUNGEON_HEIGHT * TILE_SIZE
 	)
+
+func _on_player_boarded(_destination: String) -> void:
+	_show_destination_menu()
+
+func _show_destination_menu() -> void:
+	print("MENU DE DESTINOS - proximamente")
 
 func _exit_dungeon() -> void:
 	player.exit_dungeon()

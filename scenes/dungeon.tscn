@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://cgkqoooecjb52" path="res://scripts/dungeon.gd" id="1_dungeon"]
 [ext_resource type="TileSet" uid="uid://62i3jjh0h0rn" path="res://assets/tilesets/tileset_dungeon.tres" id="2_fpimf"]
 [ext_resource type="PackedScene" uid="uid://bfmo6ho6vcsyl" path="res://scenes/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://b_boat" path="res://scenes/boat.tscn" id="3_boat"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(200, 40)
@@ -26,3 +27,6 @@ collision_layer = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ExitZone" unique_id=1835605266]
 shape = SubResource("RectangleShape2D_1")
+
+[node name="Boat" parent="." instance=ExtResource("3_boat")]
+position = Vector2(640, 1100)
