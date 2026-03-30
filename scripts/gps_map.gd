@@ -8,6 +8,13 @@ const PLAYER_COLOR := Color(0.4, 0.6, 0.9)
 const ISLAND_COLOR := Color(0.176, 0.416, 0.31)
 const ISLAND_RADIUS := 40.0
 const PLAYER_SPEED := 150.0
+const TRAVEL_SPEED := 80.0
+
+const DESTINATIONS := {
+	"isla_norte": Vector2(200, 150),
+	"isla_este": Vector2(800, 200),
+	"puerto_neutral": Vector2(640, 600)
+}
 
 var player_screen_pos := Vector2(640, 360)
 var islands: Array[Dictionary] = [
@@ -17,26 +24,42 @@ var islands: Array[Dictionary] = [
 ]
 var nearby_island: Dictionary = {}
 var initialized := false
+var traveling: bool = false
+var travel_target: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
 	initialized = true
 	queue_redraw()
 
 func _physics_process(delta: float) -> void:
-	var direction := Input.get_vector(
-		"move_left", "move_right", "move_up", "move_down"
-	)
-	player_screen_pos += direction * PLAYER_SPEED * delta
-	player_screen_pos.x = clamp(player_screen_pos.x, 0, 1280)
-	player_screen_pos.y = clamp(player_screen_pos.y, 0, 720)
-	
-	nearby_island = {}
-	for island in islands:
-		if player_screen_pos.distance_to(island.pos) < 80.0:
-			nearby_island = island
-			break
+	if not traveling:
+		var direction := Input.get_vector(
+			"move_left", "move_right", "move_up", "move_down"
+		)
+		player_screen_pos += direction * PLAYER_SPEED * delta
+		player_screen_pos.x = clamp(player_screen_pos.x, 0, 1280)
+		player_screen_pos.y = clamp(player_screen_pos.y, 0, 720)
+		
+		nearby_island = {}
+		for island in islands:
+			if player_screen_pos.distance_to(island.pos) < 80.0:
+				nearby_island = island
+				break
+	else:
+		var dir := (travel_target - player_screen_pos).normalized()
+		var dist := player_screen_pos.distance_to(travel_target)
+		if dist < 5.0:
+			traveling = false
+			player_screen_pos = travel_target
+		else:
+			player_screen_pos += dir * TRAVEL_SPEED * delta
 	
 	queue_redraw()
+
+func start_travel(destination: String) -> void:
+	if destination in DESTINATIONS:
+		travel_target = DESTINATIONS[destination]
+		traveling = true
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey:

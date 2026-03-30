@@ -2,6 +2,7 @@ extends Node2D
 class_name Dungeon
 
 signal player_exited_dungeon
+signal destination_chosen(destination: String)
 
 @onready var player: Player = $Player
 
@@ -87,7 +88,7 @@ func _on_destination_selected(destination: String) -> void:
 		destination_menu.queue_free()
 		destination_menu = null
 	player.can_move = true
-	print("Navegando hacia: ", destination)
+	emit_signal("destination_chosen", destination)
 	emit_signal("player_exited_dungeon")
 
 func _on_destination_cancelled() -> void:
