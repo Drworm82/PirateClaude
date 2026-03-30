@@ -19,6 +19,7 @@ var island_pos: Vector2 = Vector2.ZERO
 
 var land_rect: Rect2
 var exit_zone_rect: Rect2
+var destination_menu: DestinationMenu = null
 
 func _ready() -> void:
 	land_rect = Rect2(
@@ -74,7 +75,26 @@ func _on_player_boarded(_destination: String) -> void:
 	_show_destination_menu()
 
 func _show_destination_menu() -> void:
-	print("MENU DE DESTINOS - proximamente")
+	var menu_scene: PackedScene = preload("res://scenes/destination_menu.tscn")
+	destination_menu = menu_scene.instantiate()
+	add_child(destination_menu)
+	destination_menu.destination_selected.connect(_on_destination_selected)
+	destination_menu.cancelled.connect(_on_destination_cancelled)
+	player.can_move = false
+
+func _on_destination_selected(destination: String) -> void:
+	if destination_menu:
+		destination_menu.queue_free()
+		destination_menu = null
+	player.can_move = true
+	print("Navegando hacia: ", destination)
+	emit_signal("player_exited_dungeon")
+
+func _on_destination_cancelled() -> void:
+	if destination_menu:
+		destination_menu.queue_free()
+		destination_menu = null
+	player.can_move = true
 
 func _exit_dungeon() -> void:
 	player.exit_dungeon()
