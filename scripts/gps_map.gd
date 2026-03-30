@@ -7,19 +7,42 @@ const OCEAN_COLOR := Color(0.102, 0.227, 0.361)
 const PLAYER_COLOR := Color(0.4, 0.6, 0.9)
 const ISLAND_COLOR := Color(0.176, 0.416, 0.31)
 const ISLAND_RADIUS := 40.0
-const CLICK_RADIUS := 60.0
+const PLAYER_SPEED := 150.0
 
-var player_screen_pos := Vector2(614, 345)
+var player_screen_pos := Vector2(640, 360)
 var islands: Array[Dictionary] = [
 	{pos = Vector2(200, 150)},
 	{pos = Vector2(500, 350)},
 	{pos = Vector2(800, 200)}
 ]
+var nearby_island: Dictionary = {}
 var initialized := false
 
 func _ready() -> void:
 	initialized = true
 	queue_redraw()
+
+func _physics_process(delta: float) -> void:
+	var direction := Input.get_vector(
+		"move_left", "move_right", "move_up", "move_down"
+	)
+	player_screen_pos += direction * PLAYER_SPEED * delta
+	player_screen_pos.x = clamp(player_screen_pos.x, 0, 1280)
+	player_screen_pos.y = clamp(player_screen_pos.y, 0, 720)
+	
+	nearby_island = {}
+	for island in islands:
+		if player_screen_pos.distance_to(island.pos) < 80.0:
+			nearby_island = island
+			break
+	
+	queue_redraw()
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		if event.pressed and event.keycode == KEY_E:
+			if not nearby_island.is_empty():
+				emit_signal("player_entered_island", nearby_island.pos)
 
 func _draw() -> void:
 	if not initialized:
@@ -28,17 +51,17 @@ func _draw() -> void:
 	for island in islands:
 		draw_circle(island.pos, ISLAND_RADIUS, ISLAND_COLOR)
 	draw_circle(player_screen_pos, 20.0, PLAYER_COLOR)
-
-func _input(event: InputEvent) -> void:
-	if event is InputEventMouseButton:
-		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			_check_island_click(event.position)
-
-func _check_island_click(click_pos: Vector2) -> void:
-	for island in islands:
-		if click_pos.distance_to(island.pos) < CLICK_RADIUS:
-			emit_signal("player_entered_island", island.pos)
-			return
+	
+	if not nearby_island.is_empty():
+		draw_string(
+			ThemeDB.fallback_font,
+			player_screen_pos + Vector2(-40, -30),
+			"E — Entrar",
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			14,
+			Color.WHITE
+		)
 
 func update_player_position(_gps_lat: float, _gps_lng: float) -> void:
 	queue_redraw()
