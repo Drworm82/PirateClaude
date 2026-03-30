@@ -8,6 +8,7 @@ var current_dungeon: Dungeon
 var current_destination: String = ""
 
 func _ready() -> void:
+	await GameManager.initialize()
 	_setup_gps_view()
 
 func _setup_gps_view() -> void:

@@ -15,3 +15,7 @@ web_build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Supabase
+supabase_config.gd
+*.env
