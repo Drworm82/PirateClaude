@@ -4,7 +4,6 @@ class_name Dungeon
 signal player_exited_dungeon
 
 @onready var player: Player = $Player
-@onready var camera: Camera2D = $Player/Camera2D
 
 const OCEAN_COLOR := Color(0.102, 0.227, 0.361)
 const LAND_COLOR := Color(0.176, 0.416, 0.31)
@@ -35,6 +34,10 @@ func _ready() -> void:
 		2 * TILE_SIZE
 	)
 	_center_camera()
+	await get_tree().process_frame
+	var cam: Camera2D = $Player/Camera2D
+	cam.reset_smoothing()
+	cam.force_update_scroll()
 
 func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(player):
@@ -57,12 +60,11 @@ func setup(p_seed: int, pos: Vector2) -> void:
 	island_pos = pos
 
 func _center_camera() -> void:
-	var cam = $Player/Camera2D
-	if is_instance_valid(cam):
-		pass
-	$Player.position = Vector2(
-		DUNGEON_WIDTH * TILE_SIZE / 2.0,
-		DUNGEON_HEIGHT * TILE_SIZE / 2.0
+	var land_center := land_rect.position + land_rect.size / 2.0
+	player.position = land_center
+	player.bounds_max = Vector2(
+		DUNGEON_WIDTH * TILE_SIZE,
+		DUNGEON_HEIGHT * TILE_SIZE
 	)
 
 func _exit_dungeon() -> void:
