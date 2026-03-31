@@ -76,6 +76,9 @@ func _on_player_boarded(_destination: String) -> void:
 	_show_destination_menu()
 
 func _show_destination_menu() -> void:
+	if GameManager.ship_hp <= 0:
+		print("Barco destruido — repara antes de zarpar")
+		return
 	var menu_scene: PackedScene = preload("res://scenes/destination_menu.tscn")
 	destination_menu = menu_scene.instantiate()
 	add_child(destination_menu)

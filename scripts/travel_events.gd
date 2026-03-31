@@ -14,11 +14,13 @@ func generate_event() -> Dictionary:
         }
     elif roll < 55:
         var damage := randi_range(5, 20)
+        var ship_damage := randi_range(5, 15)
         return {
             "type": EventType.STORM,
             "title": "Tormenta en el mar",
-            "description": "Una tormenta golpeó tu barco.\nPerdiste " + str(damage) + " doblones en reparaciones.",
-            "doblones_delta": -damage
+            "description": "Una tormenta golpeó tu barco.\nPerdiste " + str(damage) + " doblones\ny el barco sufrió " + str(ship_damage) + " de daño.",
+            "doblones_delta": -damage,
+            "ship_damage": ship_damage
         }
     else:
         return {

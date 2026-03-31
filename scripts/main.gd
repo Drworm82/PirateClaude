@@ -8,6 +8,12 @@ var current_dungeon: Dungeon
 var current_destination: String = ""
 var travel_result_ui: Node = null
 
+const TRAVEL_COSTS := {
+	"isla_norte": 10,
+	"isla_este": 15,
+	"puerto_neutral": 20
+}
+
 func _ready() -> void:
 	await GameManager.initialize()
 	_setup_gps_view()
@@ -32,6 +38,11 @@ func _on_player_entered_island(island_pos: Vector2) -> void:
 
 func _on_destination_chosen(destination: String) -> void:
 	current_destination = destination
+	var cost: int = TRAVEL_COSTS.get(destination, 10)
+	if GameManager.doblones < cost:
+		print("Sin doblones suficientes para viajar")
+		return
+	GameManager.doblones -= cost
 
 func _on_player_exited_dungeon() -> void:
 	if current_dungeon:
@@ -50,6 +61,10 @@ func _on_travel_completed() -> void:
 	var event := TravelEvents.generate_event()
 	GameManager.doblones += event.doblones_delta
 	GameManager.doblones = max(0, GameManager.doblones)
+	
+	var ship_damage: int = event.get("ship_damage", 0)
+	if ship_damage > 0:
+		GameManager.damage_ship(ship_damage)
 	
 	var result_scene: PackedScene = preload(
 		"res://scenes/travel_result.tscn")

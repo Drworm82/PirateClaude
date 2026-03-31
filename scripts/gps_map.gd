@@ -113,6 +113,15 @@ func _draw() -> void:
 		16,
 		Color.WHITE
 	)
+	draw_string(
+		ThemeDB.fallback_font,
+		Vector2(20, 55),
+		"Barco: " + str(GameManager.ship_hp) + "/" + str(GameManager.ship_hp_max) + " HP",
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		16,
+		Color(0.9, 0.4, 0.2) if GameManager.ship_hp < 30 else Color.WHITE
+	)
 
 func update_player_position(_gps_lat: float, _gps_lng: float) -> void:
 	queue_redraw()
