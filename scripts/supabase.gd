@@ -18,6 +18,16 @@ func _get_headers() -> Array:
     ]
 
 func sign_in_anonymous() -> void:
+    var saved_token: Dictionary = _load_token()
+    if not saved_token.is_empty():
+        _access_token = saved_token.get("access_token", "")
+        _user_id = saved_token.get("user_id", "")
+        if _access_token != "" and _user_id != "":
+            print("Token cargado: ", _user_id)
+            await get_tree().process_frame
+            emit_signal("auth_completed", true)
+            return
+    
     var url := BASE_URL + "/auth/v1/signup"
     var http := HTTPRequest.new()
     add_child(http)
@@ -39,6 +49,7 @@ func _on_auth_completed(_result: int, response_code: int,
         if json and "access_token" in json:
             _access_token = json.access_token
             _user_id = json.user.id
+            _save_token()
             print("Auth exitosa: ", _user_id)
             http_node.queue_free()
             emit_signal("auth_completed", true)
@@ -46,6 +57,21 @@ func _on_auth_completed(_result: int, response_code: int,
     print("Auth error: ", response_code)
     http_node.queue_free()
     emit_signal("auth_completed", false)
+
+func _save_token() -> void:
+    var config := ConfigFile.new()
+    config.set_value("auth", "access_token", _access_token)
+    config.set_value("auth", "user_id", _user_id)
+    config.save("user://auth.cfg")
+
+func _load_token() -> Dictionary:
+    var config := ConfigFile.new()
+    if config.load("user://auth.cfg") == OK:
+        return {
+            "access_token": config.get_value("auth", "access_token", ""),
+            "user_id": config.get_value("auth", "user_id", "")
+        }
+    return {}
 
 func select(table: String, filters: String = "") -> HTTPRequest:
     var url := BASE_URL + "/rest/v1/" + table

@@ -29,7 +29,19 @@ var travel_target: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
 	initialized = true
+	var home_island := get_home_island()
+	if not islands.any(func(i): 
+		return i.pos.distance_to(home_island) < 50):
+		islands.insert(0, {
+			pos = home_island, 
+			is_home = true
+		})
+	player_screen_pos = home_island + Vector2(80, 0)
 	queue_redraw()
+
+func get_home_island() -> Vector2:
+	var center := Vector2(640, 360)
+	return center
 
 func _physics_process(delta: float) -> void:
 	if not traveling:
@@ -72,7 +84,12 @@ func _draw() -> void:
 		return
 	draw_rect(Rect2(Vector2(-2000, -2000), Vector2(6000, 6000)), OCEAN_COLOR)
 	for island in islands:
-		draw_circle(island.pos, ISLAND_RADIUS, ISLAND_COLOR)
+		var color := ISLAND_COLOR
+		var radius := ISLAND_RADIUS
+		if island.get("is_home", false):
+			color = Color(0.8, 0.6, 0.2)
+			radius = 50.0
+		draw_circle(island.pos, radius, color)
 	draw_circle(player_screen_pos, 20.0, PLAYER_COLOR)
 	
 	if not nearby_island.is_empty():
@@ -85,6 +102,15 @@ func _draw() -> void:
 			14,
 			Color.WHITE
 		)
+	draw_string(
+		ThemeDB.fallback_font,
+		Vector2(20, 30),
+		"Doblones: " + str(GameManager.doblones),
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		16,
+		Color.WHITE
+	)
 
 func update_player_position(_gps_lat: float, _gps_lng: float) -> void:
 	queue_redraw()

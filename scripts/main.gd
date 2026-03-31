@@ -41,3 +41,4 @@ func _on_player_exited_dungeon() -> void:
 		gps_map.start_travel(current_destination)
 		current_destination = ""
 	current_view = View.GPS
+	GameManager.save_player()
