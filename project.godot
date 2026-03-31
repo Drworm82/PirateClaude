@@ -19,6 +19,7 @@ config/features=PackedStringArray("4.6", "Mobile")
 
 SupabaseClient="*res://scripts/supabase.gd"
 GameManager="*res://scripts/game_manager.gd"
+TravelEvents="*res://scripts/travel_events.gd"
 
 [input]
 

@@ -6,6 +6,7 @@ var current_view: View = View.GPS
 var gps_map: GPSMap
 var current_dungeon: Dungeon
 var current_destination: String = ""
+var travel_result_ui: Node = null
 
 func _ready() -> void:
 	await GameManager.initialize()
@@ -39,6 +40,28 @@ func _on_player_exited_dungeon() -> void:
 	gps_map.visible = true
 	if current_destination != "":
 		gps_map.start_travel(current_destination)
+		gps_map.travel_completed.connect(
+			_on_travel_completed, CONNECT_ONE_SHOT)
 		current_destination = ""
 	current_view = View.GPS
 	GameManager.save_player()
+
+func _on_travel_completed() -> void:
+	var event := TravelEvents.generate_event()
+	GameManager.doblones += event.doblones_delta
+	GameManager.doblones = max(0, GameManager.doblones)
+	
+	var result_scene: PackedScene = preload(
+		"res://scenes/travel_result.tscn")
+	travel_result_ui = result_scene.instantiate()
+	add_child(travel_result_ui)
+	travel_result_ui.show_result(event)
+	travel_result_ui.closed.connect(_on_result_closed)
+	
+	await GameManager.save_player()
+
+func _on_result_closed() -> void:
+	if travel_result_ui:
+		travel_result_ui.queue_free()
+		travel_result_ui = null
+	gps_map.queue_redraw()

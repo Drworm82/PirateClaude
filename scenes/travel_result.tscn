@@ -1,0 +1,41 @@
+[gd_scene load_steps=2 format=3 uid="uid://b_travelresult"]
+
+[ext_resource type="Script" path="res://scripts/travel_result.gd" id="1_result"]
+
+[node name="TravelResult" type="CanvasLayer"]
+script = ExtResource("1_result")
+
+[node name="Panel" type="Panel" parent="."]
+offset_left = 290.0
+offset_top = 160.0
+offset_right = 990.0
+offset_bottom = 560.0
+
+[node name="Title" type="Label" parent="Panel"]
+offset_left = 20.0
+offset_top = 30.0
+offset_right = 680.0
+offset_bottom = 80.0
+horizontal_alignment = 1
+
+[node name="Description" type="Label" parent="Panel"]
+offset_left = 20.0
+offset_top = 100.0
+offset_right = 680.0
+offset_bottom = 220.0
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="DoblonesLabel" type="Label" parent="Panel"]
+offset_left = 20.0
+offset_top = 240.0
+offset_right = 680.0
+offset_bottom = 290.0
+horizontal_alignment = 1
+
+[node name="ContinuarBtn" type="Button" parent="Panel"]
+offset_left = 200.0
+offset_top = 320.0
+offset_right = 480.0
+offset_bottom = 360.0
+text = "Continuar"

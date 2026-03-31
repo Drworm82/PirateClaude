@@ -2,6 +2,7 @@ extends Node2D
 class_name GPSMap
 
 signal player_entered_island(island_pos: Vector2)
+signal travel_completed
 
 const OCEAN_COLOR := Color(0.102, 0.227, 0.361)
 const PLAYER_COLOR := Color(0.4, 0.6, 0.9)
@@ -63,6 +64,7 @@ func _physics_process(delta: float) -> void:
 		if dist < 5.0:
 			traveling = false
 			player_screen_pos = travel_target
+			emit_signal("travel_completed")
 		else:
 			player_screen_pos += dir * TRAVEL_SPEED * delta
 	
