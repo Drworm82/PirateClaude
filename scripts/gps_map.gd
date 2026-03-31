@@ -19,9 +19,9 @@ const DESTINATIONS := {
 
 var player_screen_pos := Vector2(640, 360)
 var islands: Array[Dictionary] = [
-	{pos = Vector2(200, 150)},
-	{pos = Vector2(500, 350)},
-	{pos = Vector2(800, 200)}
+	{pos = Vector2(200, 150), name = "Isla Enana"},
+	{pos = Vector2(500, 350), name = "Isla del Cocinero"},
+	{pos = Vector2(800, 200), name = "Isla Drum Jr."}
 ]
 var nearby_island: Dictionary = {}
 var initialized := false
@@ -32,10 +32,11 @@ func _ready() -> void:
 	initialized = true
 	var home_island := get_home_island()
 	if not islands.any(func(i): 
-		return i.pos.distance_to(home_island) < 50):
+			return i.pos.distance_to(home_island) < 50):
 		islands.insert(0, {
-			pos = home_island, 
-			is_home = true
+			pos = home_island,
+			is_home = true,
+			name = "Tu isla"
 		})
 	player_screen_pos = home_island + Vector2(80, 0)
 	queue_redraw()

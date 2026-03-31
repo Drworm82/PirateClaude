@@ -80,3 +80,15 @@ func _on_result_closed() -> void:
 		travel_result_ui.queue_free()
 		travel_result_ui = null
 	gps_map.queue_redraw()
+
+func open_map() -> void:
+	var dungeon := current_dungeon
+	var islands: Array = []
+	if gps_map:
+		islands = gps_map.islands
+	MapButton.open_map(dungeon, islands)
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		if event.pressed and event.keycode == KEY_M:
+			open_map()

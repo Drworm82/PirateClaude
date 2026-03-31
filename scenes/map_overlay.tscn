@@ -1,0 +1,43 @@
+[gd_scene load_steps=3 format=3 uid="uid://b_mapoverlay"]
+
+[ext_resource type="Script" path="res://scripts/map_overlay.gd" id="1_map"]
+[ext_resource type="Script" path="res://scripts/map_display.gd" id="2_display"]
+
+[node name="MapOverlay" type="CanvasLayer"]
+script = ExtResource("1_map")
+layer = 10
+
+[node name="Panel" type="Panel" parent="."]
+offset_left = 40.0
+offset_top = 40.0
+offset_right = 1240.0
+offset_bottom = 680.0
+
+[node name="Tabs" type="HBoxContainer" parent="Panel"]
+offset_left = 20.0
+offset_top = 10.0
+offset_right = 400.0
+offset_bottom = 50.0
+
+[node name="BtnIsla" type="Button" parent="Panel/Tabs"]
+text = "Isla"
+toggle_mode = true
+button_pressed = true
+
+[node name="BtnOceano" type="Button" parent="Panel/Tabs"]
+text = "Océano"
+toggle_mode = true
+
+[node name="MapDisplay" type="Control" parent="Panel"]
+offset_left = 20.0
+offset_top = 60.0
+offset_right = 1180.0
+offset_bottom = 600.0
+script = ExtResource("2_display")
+
+[node name="BtnCerrar" type="Button" parent="Panel"]
+offset_left = 1140.0
+offset_top = 10.0
+offset_right = 1190.0
+offset_bottom = 45.0
+text = "X"
