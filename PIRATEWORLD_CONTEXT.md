@@ -82,6 +82,7 @@ No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
 - Sprint 14: Salud del barco + costo de viaje en doblones
 - Sprint 15: Sistema de mapas (tecla M abre overlay, Escape cierra, pestaña Isla muestra mapa local del dungeon, pestaña Océano muestra mapa global con nombres de islas)
 - Sprint 16: Menú de destinos mejorado con nombres de islas (Isla Enana, Isla del Cocinero, Puerto Loguetown), contexto de viaje (desde/hacia/costo), HP del barco visible, botones deshabilitados sin recursos
+- Sprint 17: Barra de progreso del viaje, línea de ruta blanca origen-destino, línea azul de recorrido, texto "Rumbo a: [destino] X%", marcador de destino en el mapa
 
 ---
 
@@ -147,7 +148,7 @@ var _refresh_token: String = ""
 ---
 
 ## Próximo sprint
-**Sprint 17** — Barra de progreso del viaje en GPS + indicador de destino (nombre, distancia, tiempo estimado)
+**Sprint 18** — Exportar a Android para probar con GPS real en móvil
 
 ---
 
@@ -156,8 +157,8 @@ var _refresh_token: String = ""
 ---
 Estoy desarrollando PirateWorld, RPG pirata en Godot 4.6.1.
 Stack: GDScript + Supabase + OpenCode en VSC.
-Sprints completados: 1-16.
-Último sprint: 16 — menú de destinos mejorado (nombres One Piece, contexto de viaje, HP barco visible).
-Próximo: Sprint 17 — barra de progreso del viaje en GPS + indicador de destino.
+Sprints completados: 1-17.
+Último sprint: 17 — barra de progreso del viaje en GPS con línea de ruta.
+Próximo: Sprint 18 — exportar a Android para probar con GPS real.
 El contexto completo está en PIRATEWORLD_CONTEXT.md
 ---

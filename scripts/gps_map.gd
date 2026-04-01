@@ -27,6 +27,9 @@ var nearby_island: Dictionary = {}
 var initialized := false
 var traveling: bool = false
 var travel_target: Vector2 = Vector2.ZERO
+var travel_origin: Vector2 = Vector2.ZERO
+var travel_destination_name: String = ""
+var travel_total_distance: float = 0.0
 
 func _ready() -> void:
 	initialized = true
@@ -65,6 +68,8 @@ func _physics_process(delta: float) -> void:
 		if dist < 5.0:
 			traveling = false
 			player_screen_pos = travel_target
+			travel_destination_name = ""
+			travel_total_distance = 0.0
 			emit_signal("travel_completed")
 		else:
 			player_screen_pos += dir * TRAVEL_SPEED * delta
@@ -73,7 +78,10 @@ func _physics_process(delta: float) -> void:
 
 func start_travel(destination: String) -> void:
 	if destination in DESTINATIONS:
+		travel_origin = player_screen_pos
 		travel_target = DESTINATIONS[destination].pos
+		travel_destination_name = DESTINATIONS[destination].name
+		travel_total_distance = player_screen_pos.distance_to(travel_target)
 		traveling = true
 
 func _input(event: InputEvent) -> void:
@@ -123,6 +131,40 @@ func _draw() -> void:
 		16,
 		Color(0.9, 0.4, 0.2) if GameManager.ship_hp < 30 else Color.WHITE
 	)
+	
+	if traveling:
+		draw_line(travel_origin, travel_target, 
+			Color(1, 1, 1, 0.3), 2.0)
+		draw_line(travel_origin, player_screen_pos,
+			Color(0.4, 0.8, 1.0, 0.8), 2.0)
+		
+		var progress: float = 0.0
+		if travel_total_distance > 0:
+			progress = 1.0 - (player_screen_pos.distance_to(
+				travel_target) / travel_total_distance)
+		progress = clamp(progress, 0.0, 1.0)
+		
+		var bar_x: float = 20.0
+		var bar_y: float = 85.0
+		var bar_w: float = 300.0
+		var bar_h: float = 12.0
+		
+		draw_rect(Rect2(bar_x, bar_y, bar_w, bar_h),
+			Color(0.2, 0.2, 0.2, 0.8))
+		draw_rect(Rect2(bar_x, bar_y, bar_w * progress, bar_h),
+			Color(0.4, 0.8, 1.0))
+		
+		draw_string(
+			ThemeDB.fallback_font,
+			Vector2(bar_x, bar_y - 4),
+			"Rumbo a: " + travel_destination_name + 
+			"  " + str(int(progress * 100)) + "%",
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 13,
+			Color.WHITE
+		)
+		
+		draw_circle(travel_target, 8.0, 
+			Color(0.4, 0.8, 1.0, 0.6))
 
 func update_player_position(_gps_lat: float, _gps_lng: float) -> void:
 	queue_redraw()
