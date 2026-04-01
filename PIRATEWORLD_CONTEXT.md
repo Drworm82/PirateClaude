@@ -81,6 +81,7 @@ No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
 - Sprint 13: Eventos de viaje (tesoro/tormenta/nada)
 - Sprint 14: Salud del barco + costo de viaje en doblones
 - Sprint 15: Sistema de mapas (tecla M abre overlay, Escape cierra, pestaña Isla muestra mapa local del dungeon, pestaña Océano muestra mapa global con nombres de islas)
+- Sprint 16: Menú de destinos mejorado con nombres de islas (Isla Enana, Isla del Cocinero, Puerto Loguetown), contexto de viaje (desde/hacia/costo), HP del barco visible, botones deshabilitados sin recursos
 
 ---
 
@@ -95,13 +96,13 @@ No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
 
 ---
 
-## Destinos para viaje (en main.gd)
+## Destinos para viaje (en gps_map.gd, DESTINATIONS)
 
-| Destino | Costo (doblones) |
-|---------|------------------|
-| isla_norte | 10 |
-| isla_este | 15 |
-| puerto_neutral | 20 |
+| Destino | Nombre | Costo (doblones) | Posición |
+|---------|--------|-------------------|----------|
+| isla_norte | Isla Enana | 10 | (200, 150) |
+| isla_este | Isla del Cocinero | 15 | (800, 200) |
+| puerto_neutral | Puerto Loguetown | 20 | (640, 600) |
 
 ---
 
@@ -130,6 +131,7 @@ var is_authenticated: bool = false
 var ship_hp: int = 100
 var ship_hp_max: int = 100
 var ship_repair_cost: int = 5
+var current_island_name: String = "Tu isla"
 ```
 
 ---
@@ -145,7 +147,7 @@ var _refresh_token: String = ""
 ---
 
 ## Próximo sprint
-**Sprint 16** — Nombres de islas con guiños a One Piece + menú de destinos mejorado con contexto (de dónde sales, hacia dónde vas, costo en doblones)
+**Sprint 17** — Barra de progreso del viaje en GPS + indicador de destino (nombre, distancia, tiempo estimado)
 
 ---
 
@@ -154,9 +156,8 @@ var _refresh_token: String = ""
 ---
 Estoy desarrollando PirateWorld, RPG pirata en Godot 4.6.1.
 Stack: GDScript + Supabase + OpenCode en VSC.
-Sprints completados: 1-15.
-Último sprint: 15 — sistema de mapas (tecla M abre/cierra, Escape cierra, pestañas Isla/Océano).
-Próximo: Sprint 16 — menú de destinos mejorado con nombres
-de islas parodia de One Piece y contexto del viaje.
+Sprints completados: 1-16.
+Último sprint: 16 — menú de destinos mejorado (nombres One Piece, contexto de viaje, HP barco visible).
+Próximo: Sprint 17 — barra de progreso del viaje en GPS + indicador de destino.
 El contexto completo está en PIRATEWORLD_CONTEXT.md
 ---

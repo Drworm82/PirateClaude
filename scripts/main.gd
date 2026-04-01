@@ -27,6 +27,14 @@ func _setup_gps_view() -> void:
 
 func _on_player_entered_island(island_pos: Vector2) -> void:
 	gps_map.visible = false
+	
+	var island_name := "Isla desconocida"
+	for island in gps_map.islands:
+		if island.pos.distance_to(island_pos) < 10:
+			island_name = island.get("name", "Isla")
+			break
+	GameManager.current_island_name = island_name
+	
 	var dungeon_scene: PackedScene = preload("res://scenes/dungeon.tscn")
 	current_dungeon = dungeon_scene.instantiate()
 	add_child(current_dungeon)

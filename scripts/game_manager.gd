@@ -10,6 +10,7 @@ var is_authenticated: bool = false
 var ship_hp: int = 100
 var ship_hp_max: int = 100
 var ship_repair_cost: int = 5
+var current_island_name: String = "Tu isla"
 
 func initialize() -> void:
 	SupabaseClient.sign_in_anonymous()

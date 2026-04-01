@@ -12,9 +12,9 @@ const PLAYER_SPEED := 150.0
 const TRAVEL_SPEED := 80.0
 
 const DESTINATIONS := {
-	"isla_norte": Vector2(200, 150),
-	"isla_este": Vector2(800, 200),
-	"puerto_neutral": Vector2(640, 600)
+	"isla_norte": {"pos": Vector2(200, 150), "name": "Isla Enana", "cost": 10},
+	"isla_este": {"pos": Vector2(800, 200), "name": "Isla del Cocinero", "cost": 15},
+	"puerto_neutral": {"pos": Vector2(640, 600), "name": "Puerto Loguetown", "cost": 20}
 }
 
 var player_screen_pos := Vector2(640, 360)
@@ -73,7 +73,7 @@ func _physics_process(delta: float) -> void:
 
 func start_travel(destination: String) -> void:
 	if destination in DESTINATIONS:
-		travel_target = DESTINATIONS[destination]
+		travel_target = DESTINATIONS[destination].pos
 		traveling = true
 
 func _input(event: InputEvent) -> void:

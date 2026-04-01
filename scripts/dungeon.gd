@@ -82,6 +82,7 @@ func _show_destination_menu() -> void:
 	var menu_scene: PackedScene = preload("res://scenes/destination_menu.tscn")
 	destination_menu = menu_scene.instantiate()
 	add_child(destination_menu)
+	destination_menu.setup(GameManager.current_island_name)
 	destination_menu.destination_selected.connect(_on_destination_selected)
 	destination_menu.cancelled.connect(_on_destination_cancelled)
 	player.can_move = false
