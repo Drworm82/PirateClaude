@@ -150,6 +150,12 @@ var _refresh_token: String = ""
 ## Próximo sprint
 **Sprint 18** — Exportar a Android para probar con GPS real en móvil
 
+### Configuración Android (en progreso)
+- ✅ `project.godot`: sección `[display]` agregada (1280x720, stretch)
+- ⏳ `export_presets.cfg`: se crea desde el editor de Godot
+- ⏳ Android Build Templates: Proyecto → Instalar plantillas de Android
+- ⏳ Android SDK path: Editor → Configuración del Editor → Export → Android
+
 ---
 
 ## Plantilla para chat nuevo
@@ -159,6 +165,6 @@ Estoy desarrollando PirateWorld, RPG pirata en Godot 4.6.1.
 Stack: GDScript + Supabase + OpenCode en VSC.
 Sprints completados: 1-17.
 Último sprint: 17 — barra de progreso del viaje en GPS con línea de ruta.
-Próximo: Sprint 18 — exportar a Android para probar con GPS real.
+En proceso: Sprint 18 — exportar a Android para probar con GPS real.
 El contexto completo está en PIRATEWORLD_CONTEXT.md
 ---
