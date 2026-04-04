@@ -1,5 +1,7 @@
 extends Node
 
+signal home_position_ready(lat: float, lng: float)
+
 var player_id: String = ""
 var doblones: int = 100
 var prestigio: int = 0
@@ -11,6 +13,30 @@ var ship_hp: int = 100
 var ship_hp_max: int = 100
 var ship_repair_cost: int = 5
 var current_island_name: String = "Tu isla"
+
+func _ready() -> void:
+	GpsService.location_updated.connect(_on_gps_location)
+	GpsService.location_error.connect(_on_gps_error)
+
+func _on_gps_location(lat: float, lng: float) -> void:
+	if home_lat == 19.4326 and home_lng == -99.1332:
+		home_lat = lat
+		home_lng = lng
+		emit_signal("home_position_ready", lat, lng)
+		_sync_home_position()
+
+
+func _on_gps_error(reason: String) -> void:
+	print("GPS Error: ", reason)
+	emit_signal("home_position_ready", home_lat, home_lng)
+
+
+func _sync_home_position() -> void:
+	var data = {
+		"lat_center": home_lat,
+		"lng_center": home_lng
+	}
+	SupabaseClient.update_player(data)
 
 func initialize() -> void:
 	SupabaseClient.sign_in_anonymous()

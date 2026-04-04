@@ -17,8 +17,9 @@ config/features=PackedStringArray("4.6", "Mobile")
 
 [autoload]
 
-SupabaseClient="*res://scripts/supabase.gd"
+GpsService="*uid://cgr8umjxg5fm6"
 GameManager="*res://scripts/game_manager.gd"
+SupabaseClient="*res://scripts/supabase.gd"
 TravelEvents="*res://scripts/travel_events.gd"
 MapButton="*res://scripts/map_button.gd"
 

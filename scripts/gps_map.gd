@@ -11,13 +11,19 @@ const ISLAND_RADIUS := 40.0
 const PLAYER_SPEED := 150.0
 const TRAVEL_SPEED := 80.0
 
+const SCALE: float = 10000.0  # píxeles por grado (ajustable)
+
+var _player_lat: float = 0.0
+var _player_lng: float = 0.0
+var _map_center: Vector2  # centro de pantalla
+
 const DESTINATIONS := {
 	"isla_norte": {"pos": Vector2(200, 150), "name": "Isla Enana", "cost": 10},
 	"isla_este": {"pos": Vector2(800, 200), "name": "Isla del Cocinero", "cost": 15},
 	"puerto_neutral": {"pos": Vector2(640, 600), "name": "Puerto Loguetown", "cost": 20}
 }
 
-var player_screen_pos := Vector2(640, 360)
+var player_screen_pos := Vector2(360, 640)
 var islands: Array[Dictionary] = [
 	{pos = Vector2(200, 150), name = "Isla Enana"},
 	{pos = Vector2(500, 350), name = "Isla del Cocinero"},
@@ -35,6 +41,8 @@ var context_button = null
 
 func _ready() -> void:
 	initialized = true
+	_map_center = get_viewport_rect().size / 2.0
+	GameManager.home_position_ready.connect(_on_home_ready)
 	var home_island := get_home_island()
 	if not islands.any(func(i):
 			return i.pos.distance_to(home_island) < 50):
@@ -52,8 +60,32 @@ func _ready() -> void:
 		context_button.action_pressed.connect(_on_context_pressed)
 
 func get_home_island() -> Vector2:
-	var center := Vector2(640, 360)
+	var center := get_viewport_rect().size / 2.0
 	return center
+
+
+func _on_home_ready(lat: float, lng: float) -> void:
+	_player_lat = lat
+	_player_lng = lng
+	_place_player_at_center()
+	_place_islands_relative()
+
+
+func _place_player_at_center() -> void:
+	player_screen_pos = _map_center
+
+
+func _place_islands_relative() -> void:
+	for island in islands:
+		if "lat" in island and "lng" in island:
+			island.pos = _world_to_screen(island.lat, island.lng)
+
+
+func _world_to_screen(lat: float, lng: float) -> Vector2:
+	var dx = (lng - _player_lng) * SCALE
+	var dy = (lat - _player_lat) * SCALE * -1.0
+	return _map_center + Vector2(dx, dy)
+
 
 func _physics_process(delta: float) -> void:
 	if not traveling:
@@ -61,8 +93,9 @@ func _physics_process(delta: float) -> void:
 			"move_left", "move_right", "move_up", "move_down"
 		)
 		player_screen_pos += direction * PLAYER_SPEED * delta
-		player_screen_pos.x = clamp(player_screen_pos.x, 0, 1280)
-		player_screen_pos.y = clamp(player_screen_pos.y, 0, 720)
+		var vp := get_viewport_rect().size
+	player_screen_pos.x = clamp(player_screen_pos.x, 0, vp.x)
+	player_screen_pos.y = clamp(player_screen_pos.y, 0, vp.y)
 
 		nearby_island = {}
 		for island in islands:
