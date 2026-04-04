@@ -16,11 +16,11 @@
 | Archivo | Descripción |
 |---------|-------------|
 | `main.gd` | Controlador principal. Gestiona transiciones GPS↔Dungeon, viajes, eventos, mapas |
-| `gps_map.gd` | Vista del océano. Renderiza islas, jugador, travel marker, HUD de doblones/HP |
-| `dungeon.gd` | Vista de isla. Generación procedural, zona de salida, interacción con bote |
-| `player.gd` | Movimiento WASD/joystick, límites de mapa |
+| `gps_map.gd` | Vista del océano. Renderiza islas, jugador, travel marker, HUD de doblones/HP. Botón contextual "Entrar" cerca de islas |
+| `dungeon.gd` | Vista de isla. Generación procedural, zona de salida, botón contextual "Abordar" cerca del bote |
+| `player.gd` | Movimiento WASD/joystick, límites de mapa, rotación según dirección |
 | `boat.gd` | Sprite del bote, detección de proximidad, señal de embarque |
-| `destination_menu.gd` | UI de selección de destino con 3 botones, deshabilita joystick al abrirse |
+| `destination_menu.gd` | UI de selección de destino con 3 botones. Deshabilita joystick al abrirse |
 | `travel_events.gd` | Generador de eventos aleatorios (tesoro/tormenta/nada) |
 | `travel_result.gd` | Overlay de resultado de viaje con título, descripción, delta de doblones |
 | `map_overlay.gd` | Sistema de mapas con pestañas (Isla/Océano) y dibujo procedural |
@@ -30,21 +30,23 @@
 | `supabase.gd` | Cliente REST, auth anónima, JWT refresh token |
 | `supabase_config.gd` | Credenciales de Supabase (NO committing a git) |
 | `island_generator.gd` | Generación procedural de islas con Perlin (reservado para Sprint 16+) |
-| `virtual_joystick.gd` | Joystick virtual flotante. Maneja touch y mouse. Inyecta Input actions. |
+| `virtual_joystick.gd` | Joystick virtual flotante. Maneja touch y mouse. Inyecta Input actions. Vive en main.tscn |
+| `context_action_button.gd` | Botón contextual táctil. Aparece/desaparece según proximidad. Layer 20 |
 
 ### Escenas (`scenes/`)
 
 | Archivo | Descripción |
 |---------|-------------|
-| `main.tscn` | Escena raíz del juego |
-| `gps_map.tscn` | Vista oceano con GPSMap |
-| `dungeon.tscn` | Vista isla con TileMap, Player, Boat, Dungeon, VirtualJoystick |
+| `main.tscn` | Escena raíz. Contiene VirtualJoystick (único en el proyecto) |
+| `gps_map.tscn` | Vista océano. Contiene ContextActionButton instanciado en runtime |
+| `dungeon.tscn` | Vista isla con TileMap, Player, Boat. ContextActionButton instanciado en runtime |
 | `player.tscn` | Nodo del jugador con sprite y Camera2D |
 | `boat.tscn` | Sprite del bote en la orilla sur |
-| `destination_menu.tscn` | CanvasLayer con panel de destinos (Layer 10) |
+| `destination_menu.tscn` | CanvasLayer con panel de destinos (Layer 20) |
 | `travel_result.tscn` | CanvasLayer con panel de resultado |
 | `map_overlay.tscn` | Overlay completo del mapa |
-| `virtual_joystick.tscn` | CanvasLayer (Layer 5) → JoystickControl (Control, Full Rect, script) → OuterRing + InnerDot |
+| `virtual_joystick.tscn` | CanvasLayer (Layer 2) → JoystickControl (Control, Full Rect, grupo: joystick) → OuterRing + InnerDot |
+| `context_action_button.tscn` | CanvasLayer (Layer 20) → Button (Bottom Center, 200x60) |
 
 ### Assets
 No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
@@ -85,20 +87,34 @@ No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
 - Sprint 15: Sistema de mapas (tecla M abre overlay, Escape cierra, pestaña Isla muestra mapa local del dungeon, pestaña Océano muestra mapa global con nombres de islas)
 - Sprint 16: Menú de destinos mejorado con nombres de islas (Isla Enana, Isla del Cocinero, Puerto Loguetown), contexto de viaje (desde/hacia/costo), HP del barco visible, botones deshabilitados sin recursos
 - Sprint 17: Barra de progreso del viaje, línea de ruta blanca origen-destino, línea azul de recorrido, texto "Rumbo a: [destino] X%", marcador de destino en el mapa
-- Sprint 18: Export a Android funcional. Joystick virtual flotante en dungeon (touch + mouse). Input Map con move_up/down/left/right/interact. DestinationMenu deshabilita joystick al abrirse. Layers: joystick=5, menú=10.
+- Sprint 18: Export a Android funcional. Orientación retrato. Joystick virtual flotante (touch+mouse) en main.tscn. Input Map con move_up/down/left/right/interact.
+- Sprint 19: Botón contextual táctil. "Entrar" en GPS map cerca de islas. "Abordar" en dungeon cerca del bote. Joystick único en main.tscn encontrado por grupo. Tecla E sigue funcionando en PC como fallback.
 
 ---
 
-## Sistema de joystick virtual (`virtual_joystick.gd`)
-- Extiende `Control`, vive dentro de `CanvasLayer` (Layer 5)
-- Aparece flotante donde el jugador toca (mitad izquierda de pantalla en versión anterior, ahora toda la pantalla)
-- Maneja `InputEventScreenTouch` y `InputEventScreenDrag` para Android
-- Maneja `InputEventMouseButton` y `InputEventMouseMotion` para PC
+## Arquitectura de controles móviles
+
+### VirtualJoystick
+- **Ubicación**: solo en `main.tscn` (único en todo el proyecto)
+- **Encontrado por**: `get_tree().get_first_node_in_group("joystick")`
+- **Layer**: 2 (debajo de todo UI)
+- `JoystickControl` en grupo `joystick`
+- Usa `_unhandled_input` para no bloquear botones UI
 - Inyecta `Input.action_press/release` para move_left/right/up/down
-- `set_enabled(false)` lo desactiva completamente (usado cuando se abre el menú de destinos)
-- `JoystickControl` está en el grupo `joystick` para ser encontrado con `get_first_node_in_group()`
-- OuterRing: 120x120, dibuja arco blanco 30% alpha
-- InnerDot: 50x50, dibuja círculo blanco 70% alpha
+- `set_enabled(false/true)` para desactivar cuando hay menús
+
+### ContextActionButton
+- **Ubicación**: instanciado en runtime en `gps_map.gd` y `dungeon.gd`
+- **Layer**: 20 (encima de todo)
+- Aparece solo cuando el jugador está cerca de un objeto interactuable
+- En GPS map: "Entrar" a menos de 80px de una isla
+- En dungeon: "Abordar" a menos de 80px del bote
+- Cuando aparece: joystick se desactiva para no bloquear el toque
+- Señal: `action_pressed`
+
+### Flujo de desactivación del joystick al cambiar de vista
+- En `main.gd._on_player_entered_island()`: GPS joystick se desactiva con `set_process_unhandled_input(false)` y `set_process_input(false)`
+- En `main.gd._on_player_exited_dungeon()`: GPS joystick se reactiva
 
 ---
 
@@ -144,12 +160,12 @@ No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
 | **Eventos de viaje** | Al llegar: 30% tesoro (+10-50 doblones), 25% tormenta (-5-20 doblones + 5-15 daño barco), 45% nada |
 | **Salud del barco** | HP del barco (100 max). Tormentas dañan. Si llega a 0, no se puede zarpar. Reparación cuesta 5 doblones por HP |
 | **Mapa overlay** | Tecla M abre/cierra overlay. Escape también cierra. Pestaña "Isla" muestra dungeon con jugador y zona de salida. Pestaña "Océano" muestra islas conocidas con nombres |
-| **Joystick virtual** | Flotante, aparece al tocar pantalla. Funciona en Android (touch) y PC (mouse). Se deshabilita cuando hay menús abiertos |
+| **Joystick virtual** | Único en main.tscn. Flotante, aparece al tocar. Funciona en Android (touch) y PC (mouse). Se deshabilita con menús |
+| **Botón contextual** | Táctil, aparece cerca de objetos interactuables. "Entrar" en GPS, "Abordar" en dungeon |
 
 ---
 
 ## Variables principales de GameManager
-
 ```gdscript
 var player_id: String = ""
 var doblones: int = 100
@@ -161,19 +177,31 @@ var ship_hp: int = 100
 var ship_hp_max: int = 100
 var ship_repair_cost: int = 5
 var current_island_name: String = "Tu isla"
+```
 
-Variables principales de SupabaseClient
-gdscriptvar _access_token: String = ""
+---
+
+## Variables principales de SupabaseClient
+```gdscript
+var _access_token: String = ""
 var _user_id: String = ""
 var _refresh_token: String = ""
+```
+
+---
+
+## Próximo sprint
+**Sprint 20** — Pruebas en Android con GPS real
+
+---
 
 ## Plantilla para chat nuevo
 
 ---
 Estoy desarrollando PirateWorld, RPG pirata en Godot 4.6.1.
 Stack: GDScript + Supabase + OpenCode en VSC.
-Sprints completados: 1-17.
-Último sprint: 17 — barra de progreso del viaje en GPS con línea de ruta.
-En proceso: Sprint 18 — exportar a Android para probar con GPS real.
+Sprints completados: 1-19.
+Último sprint: 19 — botón contextual táctil (Entrar/Abordar) + joystick único en main.tscn.
+En proceso: Sprint 20 — pruebas en Android con GPS real.
 El contexto completo está en PIRATEWORLD_CONTEXT.md
 ---

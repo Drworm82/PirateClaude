@@ -30,19 +30,26 @@ var travel_target: Vector2 = Vector2.ZERO
 var travel_origin: Vector2 = Vector2.ZERO
 var travel_destination_name: String = ""
 var travel_total_distance: float = 0.0
+var joystick = null
+var context_button = null
 
 func _ready() -> void:
 	initialized = true
 	var home_island := get_home_island()
-	if not islands.any(func(i): 
+	if not islands.any(func(i):
 			return i.pos.distance_to(home_island) < 50):
 		islands.insert(0, {
 			pos = home_island,
 			is_home = true,
 			name = "Tu isla"
 		})
-	player_screen_pos = home_island + Vector2(80, 0)
+	player_screen_pos = home_island + Vector2(150, 0)
 	queue_redraw()
+
+	joystick = get_tree().get_first_node_in_group("joystick")
+	context_button = get_node_or_null("ContextActionButton")
+	if context_button:
+		context_button.action_pressed.connect(_on_context_pressed)
 
 func get_home_island() -> Vector2:
 	var center := Vector2(640, 360)
@@ -56,15 +63,27 @@ func _physics_process(delta: float) -> void:
 		player_screen_pos += direction * PLAYER_SPEED * delta
 		player_screen_pos.x = clamp(player_screen_pos.x, 0, 1280)
 		player_screen_pos.y = clamp(player_screen_pos.y, 0, 720)
-		
+
 		nearby_island = {}
 		for island in islands:
 			if player_screen_pos.distance_to(island.pos) < 80.0:
 				nearby_island = island
 				break
+
+		if context_button != null:
+			if not nearby_island.is_empty():
+				context_button.show_action("Entrar")
+				if joystick:
+					joystick.set_enabled(false)
+			else:
+				context_button.hide_action()
+				if joystick:
+					joystick.set_enabled(true)
 	else:
+		if context_button != null:
+			context_button.hide_action()
 		var dir := (travel_target - player_screen_pos).normalized()
-		var dist := player_screen_pos.distance_to(travel_target)
+		var dist: float = player_screen_pos.distance_to(travel_target)
 		if dist < 5.0:
 			traveling = false
 			player_screen_pos = travel_target
@@ -73,7 +92,7 @@ func _physics_process(delta: float) -> void:
 			emit_signal("travel_completed")
 		else:
 			player_screen_pos += dir * TRAVEL_SPEED * delta
-	
+
 	queue_redraw()
 
 func start_travel(destination: String) -> void:
@@ -168,3 +187,11 @@ func _draw() -> void:
 
 func update_player_position(_gps_lat: float, _gps_lng: float) -> void:
 	queue_redraw()
+
+func _on_context_pressed() -> void:
+	if not nearby_island.is_empty():
+		emit_signal("player_entered_island", nearby_island.pos)
+
+func _exit_tree() -> void:
+	if joystick:
+		joystick.set_enabled(false)

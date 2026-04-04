@@ -1,8 +1,11 @@
-[gd_scene load_steps=2 format=3 uid="uid://gps_map_scene"]
+[gd_scene format=3 uid="uid://cwcc7jb5io1hr"]
 
-[ext_resource type="Script" path="res://scripts/gps_map.gd" id="1_gps"]
+[ext_resource type="Script" uid="uid://bjaecxdnrarme" path="res://scripts/gps_map.gd" id="1_gps"]
+[ext_resource type="PackedScene" uid="uid://dgqwbroohd0ya" path="res://scenes/context_action_button.tscn" id="3_ufvei"]
 
-[node name="GPSMap" type="Node2D"]
+[node name="GPSMap" type="Node2D" unique_id=1233528433]
 script = ExtResource("1_gps")
 
-[node name="GridLines" type="Node2D" parent="."]
+[node name="GridLines" type="Node2D" parent="." unique_id=1150336103]
+
+[node name="ContextActionButton" parent="." unique_id=31385783 instance=ExtResource("3_ufvei")]

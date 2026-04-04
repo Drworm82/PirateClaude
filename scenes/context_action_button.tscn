@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://dgqwbroohd0ya"]
+
+[ext_resource type="Script" uid="uid://yg8k4p5nlvc" path="res://scripts/context_action_button.gd" id="1_nnq17"]
+
+[node name="ContextActionButton" type="CanvasLayer" unique_id=31385783]
+layer = 25
+script = ExtResource("1_nnq17")
+
+[node name="Button" type="Button" parent="." unique_id=323811166]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -100.0
+offset_top = -60.0
+offset_right = 100.0
+grow_horizontal = 2
+grow_vertical = 0

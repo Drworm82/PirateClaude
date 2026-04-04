@@ -26,11 +26,9 @@ func set_enabled(value: bool) -> void:
 		_reset_input()
 		_hide()
 
-func _input(event):
+func _unhandled_input(event):
 	if not _enabled:
 		return
-
-	# PC — mouse
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			dragging = true
@@ -40,13 +38,20 @@ func _input(event):
 			dragging = false
 			_reset_input()
 			_hide()
-
 	elif event is InputEventMouseMotion and dragging and _touch_index == -1:
 		_update_direction(event.position)
-
-	# Android — touch
 	elif event is InputEventScreenTouch:
 		if event.pressed and _touch_index == -1:
+			var context_btn = get_tree().get_first_node_in_group("context_button")
+			if context_btn != null and context_btn.visible:
+				var btn = context_btn.get_node_or_null("Button")
+				if btn != null and btn.visible:
+					var btn_rect = btn.get_global_rect()
+					if btn_rect.has_point(event.position):
+						return
+			var dest_menu = get_tree().get_first_node_in_group("destination_menu")
+			if dest_menu != null and dest_menu.visible:
+				return
 			_touch_index = event.index
 			dragging = true
 			origin = event.position
@@ -56,7 +61,6 @@ func _input(event):
 			dragging = false
 			_reset_input()
 			_hide()
-
 	elif event is InputEventScreenDrag and event.index == _touch_index:
 		_update_direction(event.position)
 

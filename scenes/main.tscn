@@ -2,12 +2,9 @@
 
 [ext_resource type="Script" uid="uid://crterh48ityh5" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://dplm8vh7s28ok" path="res://scenes/virtual_joystick.tscn" id="2_0wfyh"]
-[ext_resource type="Script" uid="uid://daq7svdkwns0s" path="res://scripts/touch_test.gd" id="3_sugp2"]
 
 [node name="Main" type="Node" unique_id=1047061439]
 script = ExtResource("1_main")
 
 [node name="VirtualJoystick" parent="." unique_id=1979058788 instance=ExtResource("2_0wfyh")]
-
-[node name="TouchTest" type="Node2D" parent="." unique_id=1930750386]
-script = ExtResource("3_sugp2")
+layer = 1

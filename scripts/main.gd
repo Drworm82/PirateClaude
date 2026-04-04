@@ -26,7 +26,24 @@ func _setup_gps_view() -> void:
 	current_view = View.GPS
 
 func _on_player_entered_island(island_pos: Vector2) -> void:
+	if current_view == View.DUNGEON:
+		return
+
 	gps_map.visible = false
+	
+	var gps_joystick = gps_map.get_node_or_null("VirtualJoystick/JoystickControl")
+	if gps_joystick:
+		gps_joystick.set_process_unhandled_input(false)
+		gps_joystick.set_process_input(false)
+		gps_joystick.visible = false
+	
+	Input.action_release("move_left")
+	Input.action_release("move_right")
+	Input.action_release("move_up")
+	Input.action_release("move_down")
+	
+	if gps_map.joystick:
+		gps_map.joystick.set_enabled(false)
 	
 	var island_name := "Isla desconocida"
 	for island in gps_map.islands:
@@ -57,6 +74,13 @@ func _on_player_exited_dungeon() -> void:
 		current_dungeon.queue_free()
 		current_dungeon = null
 	gps_map.visible = true
+	
+	var gps_joystick = gps_map.get_node_or_null("VirtualJoystick/JoystickControl")
+	if gps_joystick:
+		gps_joystick.set_process_unhandled_input(true)
+		gps_joystick.set_process_input(true)
+		gps_joystick.visible = true
+	
 	if current_destination != "":
 		gps_map.start_travel(current_destination)
 		gps_map.travel_completed.connect(
