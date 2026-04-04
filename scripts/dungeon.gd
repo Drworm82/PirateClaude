@@ -4,7 +4,8 @@ class_name Dungeon
 signal player_exited_dungeon
 signal destination_chosen(destination: String)
 
-@onready var player: Player = $Player
+@onready var player = $Player
+@onready var joystick = $VirtualJoystick/JoystickControl
 
 const OCEAN_COLOR := Color(0.102, 0.227, 0.361)
 const LAND_COLOR := Color(0.176, 0.416, 0.31)
@@ -35,22 +36,31 @@ func _ready() -> void:
 		8 * TILE_SIZE,
 		2 * TILE_SIZE
 	)
+
 	_center_camera()
+
 	await get_tree().process_frame
 	var cam: Camera2D = $Player/Camera2D
 	cam.reset_smoothing()
 	cam.force_update_scroll()
+
 	$TileMap.clear()
 	$Boat.player_boarded.connect(_on_player_boarded)
 	$Boat.set_player_ref(player)
 
+	# 🔥 aseguramos que joystick inicia activo
+	if joystick:
+		joystick.set_enabled(true)
+
 func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(player):
 		return
+
 	var exit_center := Vector2(
 		DUNGEON_WIDTH * TILE_SIZE / 2.0,
 		(DUNGEON_HEIGHT - 2) * TILE_SIZE
 	)
+
 	if player.global_position.distance_to(exit_center) < 120.0:
 		_exit_dungeon()
 
@@ -79,19 +89,32 @@ func _show_destination_menu() -> void:
 	if GameManager.ship_hp <= 0:
 		print("Barco destruido — repara antes de zarpar")
 		return
+
 	var menu_scene: PackedScene = preload("res://scenes/destination_menu.tscn")
 	destination_menu = menu_scene.instantiate()
 	add_child(destination_menu)
+
 	destination_menu.setup(GameManager.current_island_name)
 	destination_menu.destination_selected.connect(_on_destination_selected)
 	destination_menu.cancelled.connect(_on_destination_cancelled)
+
 	player.can_move = false
+
+	# 🔥 DESACTIVAR JOYSTICK
+	if joystick:
+		joystick.set_enabled(false)
 
 func _on_destination_selected(destination: String) -> void:
 	if destination_menu:
 		destination_menu.queue_free()
 		destination_menu = null
+
 	player.can_move = true
+
+	# 🔥 REACTIVAR JOYSTICK
+	if joystick:
+		joystick.set_enabled(true)
+
 	emit_signal("destination_chosen", destination)
 	emit_signal("player_exited_dungeon")
 
@@ -99,7 +122,12 @@ func _on_destination_cancelled() -> void:
 	if destination_menu:
 		destination_menu.queue_free()
 		destination_menu = null
+
 	player.can_move = true
+
+	# 🔥 REACTIVAR JOYSTICK
+	if joystick:
+		joystick.set_enabled(true)
 
 func _exit_dungeon() -> void:
 	player.exit_dungeon()

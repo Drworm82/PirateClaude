@@ -1,24 +1,27 @@
-[gd_scene load_steps=2 format=3 uid="uid://b_destmenu"]
+[gd_scene format=3 uid="uid://bp803k3rse5to"]
 
-[ext_resource type="Script" path="res://scripts/destination_menu.gd" id="1_menu"]
+[ext_resource type="Script" uid="uid://bwx2u17q6rf1m" path="res://scripts/destination_menu.gd" id="1_menu"]
 
-[node name="DestinationMenu" type="CanvasLayer"]
+[node name="DestinationMenu" type="CanvasLayer" unique_id=1609267399]
+layer = 10
 script = ExtResource("1_menu")
 
-[node name="Panel" type="Panel" parent="."]
+[node name="Panel" type="Panel" parent="." unique_id=2106409727]
 offset_left = 390.0
 offset_top = 210.0
 offset_right = 890.0
 offset_bottom = 510.0
 
-[node name="ContextLabel" type="Label" parent="Panel"]
+[node name="ContextLabel" type="Label" parent="Panel" unique_id=615156800]
+layout_mode = 0
 offset_left = 20.0
 offset_top = 60.0
 offset_right = 680.0
 offset_bottom = 100.0
 horizontal_alignment = 1
 
-[node name="Label" type="Label" parent="Panel"]
+[node name="Label" type="Label" parent="Panel" unique_id=1460466122]
+layout_mode = 0
 offset_left = 20.0
 offset_top = 20.0
 offset_right = 480.0
@@ -26,22 +29,27 @@ offset_bottom = 60.0
 text = "Selecciona tu destino"
 horizontal_alignment = 1
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel" unique_id=672470992]
+layout_mode = 0
 offset_left = 50.0
 offset_top = 120.0
 offset_right = 450.0
 offset_bottom = 340.0
 
-[node name="Isla1" type="Button" parent="Panel/VBoxContainer"]
+[node name="Isla1" type="Button" parent="Panel/VBoxContainer" unique_id=368056014]
+layout_mode = 2
 text = "Isla del Norte"
 
-[node name="Isla2" type="Button" parent="Panel/VBoxContainer"]
+[node name="Isla2" type="Button" parent="Panel/VBoxContainer" unique_id=838336783]
+layout_mode = 2
 text = "Isla del Este"
 
-[node name="PuertoNeutral" type="Button" parent="Panel/VBoxContainer"]
+[node name="PuertoNeutral" type="Button" parent="Panel/VBoxContainer" unique_id=1030492055]
+layout_mode = 2
 text = "Puerto Neutral"
 
-[node name="Cancelar" type="Button" parent="Panel"]
+[node name="Cancelar" type="Button" parent="Panel" unique_id=1655376771]
+layout_mode = 0
 offset_left = 150.0
 offset_top = 360.0
 offset_right = 350.0

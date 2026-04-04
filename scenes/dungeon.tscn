@@ -3,7 +3,8 @@
 [ext_resource type="Script" uid="uid://cgkqoooecjb52" path="res://scripts/dungeon.gd" id="1_dungeon"]
 [ext_resource type="TileSet" uid="uid://62i3jjh0h0rn" path="res://assets/tilesets/tileset_dungeon.tres" id="2_fpimf"]
 [ext_resource type="PackedScene" uid="uid://bfmo6ho6vcsyl" path="res://scenes/player.tscn" id="2_player"]
-[ext_resource type="PackedScene" uid="uid://b_boat" path="res://scenes/boat.tscn" id="3_boat"]
+[ext_resource type="PackedScene" path="res://scenes/boat.tscn" id="3_boat"]
+[ext_resource type="PackedScene" uid="uid://dplm8vh7s28ok" path="res://scenes/virtual_joystick.tscn" id="5_fvacq"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(200, 40)
@@ -28,5 +29,13 @@ collision_layer = 2
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ExitZone" unique_id=1835605266]
 shape = SubResource("RectangleShape2D_1")
 
-[node name="Boat" parent="." instance=ExtResource("3_boat")]
+[node name="Boat" parent="." unique_id=1944592298 instance=ExtResource("3_boat")]
 position = Vector2(640, 1100)
+
+[node name="VirtualJoystick" parent="." unique_id=1979058788 instance=ExtResource("5_fvacq")]
+layer = 5
+
+[node name="JoystickControl" parent="VirtualJoystick" index="0" unique_id=2021982983 groups=["joystick"]]
+mouse_filter = 0
+
+[editable path="VirtualJoystick"]

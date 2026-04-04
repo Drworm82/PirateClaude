@@ -18,9 +18,9 @@
 | `main.gd` | Controlador principal. Gestiona transiciones GPS↔Dungeon, viajes, eventos, mapas |
 | `gps_map.gd` | Vista del océano. Renderiza islas, jugador, travel marker, HUD de doblones/HP |
 | `dungeon.gd` | Vista de isla. Generación procedural, zona de salida, interacción con bote |
-| `player.gd` | Movimiento WASD, límites de mapa, interacción con E |
-| `boat.gd` | Sprite del bote, embarque del jugador, señal de destino seleccionado |
-| `destination_menu.gd` | UI de selección de destino con 3 botones |
+| `player.gd` | Movimiento WASD/joystick, límites de mapa |
+| `boat.gd` | Sprite del bote, detección de proximidad, señal de embarque |
+| `destination_menu.gd` | UI de selección de destino con 3 botones, deshabilita joystick al abrirse |
 | `travel_events.gd` | Generador de eventos aleatorios (tesoro/tormenta/nada) |
 | `travel_result.gd` | Overlay de resultado de viaje con título, descripción, delta de doblones |
 | `map_overlay.gd` | Sistema de mapas con pestañas (Isla/Océano) y dibujo procedural |
@@ -30,6 +30,7 @@
 | `supabase.gd` | Cliente REST, auth anónima, JWT refresh token |
 | `supabase_config.gd` | Credenciales de Supabase (NO committing a git) |
 | `island_generator.gd` | Generación procedural de islas con Perlin (reservado para Sprint 16+) |
+| `virtual_joystick.gd` | Joystick virtual flotante. Maneja touch y mouse. Inyecta Input actions. |
 
 ### Escenas (`scenes/`)
 
@@ -37,12 +38,13 @@
 |---------|-------------|
 | `main.tscn` | Escena raíz del juego |
 | `gps_map.tscn` | Vista oceano con GPSMap |
-| `dungeon.tscn` | Vista isla con TileMap, Player, Boat, Dungeon |
+| `dungeon.tscn` | Vista isla con TileMap, Player, Boat, Dungeon, VirtualJoystick |
 | `player.tscn` | Nodo del jugador con sprite y Camera2D |
 | `boat.tscn` | Sprite del bote en la orilla sur |
-| `destination_menu.tscn` | Panel con 3 botones de destino |
+| `destination_menu.tscn` | CanvasLayer con panel de destinos (Layer 10) |
 | `travel_result.tscn` | CanvasLayer con panel de resultado |
 | `map_overlay.tscn` | Overlay completo del mapa |
+| `virtual_joystick.tscn` | CanvasLayer (Layer 5) → JoystickControl (Control, Full Rect, script) → OuterRing + InnerDot |
 
 ### Assets
 No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
@@ -83,6 +85,31 @@ No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
 - Sprint 15: Sistema de mapas (tecla M abre overlay, Escape cierra, pestaña Isla muestra mapa local del dungeon, pestaña Océano muestra mapa global con nombres de islas)
 - Sprint 16: Menú de destinos mejorado con nombres de islas (Isla Enana, Isla del Cocinero, Puerto Loguetown), contexto de viaje (desde/hacia/costo), HP del barco visible, botones deshabilitados sin recursos
 - Sprint 17: Barra de progreso del viaje, línea de ruta blanca origen-destino, línea azul de recorrido, texto "Rumbo a: [destino] X%", marcador de destino en el mapa
+- Sprint 18: Export a Android funcional. Joystick virtual flotante en dungeon (touch + mouse). Input Map con move_up/down/left/right/interact. DestinationMenu deshabilita joystick al abrirse. Layers: joystick=5, menú=10.
+
+---
+
+## Sistema de joystick virtual (`virtual_joystick.gd`)
+- Extiende `Control`, vive dentro de `CanvasLayer` (Layer 5)
+- Aparece flotante donde el jugador toca (mitad izquierda de pantalla en versión anterior, ahora toda la pantalla)
+- Maneja `InputEventScreenTouch` y `InputEventScreenDrag` para Android
+- Maneja `InputEventMouseButton` y `InputEventMouseMotion` para PC
+- Inyecta `Input.action_press/release` para move_left/right/up/down
+- `set_enabled(false)` lo desactiva completamente (usado cuando se abre el menú de destinos)
+- `JoystickControl` está en el grupo `joystick` para ser encontrado con `get_first_node_in_group()`
+- OuterRing: 120x120, dibuja arco blanco 30% alpha
+- InnerDot: 50x50, dibuja círculo blanco 70% alpha
+
+---
+
+## Input Map (project.godot)
+| Acción | Teclas |
+|--------|--------|
+| move_up | W, Up |
+| move_down | S, Down |
+| move_left | A, Left |
+| move_right | D, Right |
+| interact | E, Space |
 
 ---
 
@@ -117,6 +144,7 @@ No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
 | **Eventos de viaje** | Al llegar: 30% tesoro (+10-50 doblones), 25% tormenta (-5-20 doblones + 5-15 daño barco), 45% nada |
 | **Salud del barco** | HP del barco (100 max). Tormentas dañan. Si llega a 0, no se puede zarpar. Reparación cuesta 5 doblones por HP |
 | **Mapa overlay** | Tecla M abre/cierra overlay. Escape también cierra. Pestaña "Isla" muestra dungeon con jugador y zona de salida. Pestaña "Océano" muestra islas conocidas con nombres |
+| **Joystick virtual** | Flotante, aparece al tocar pantalla. Funciona en Android (touch) y PC (mouse). Se deshabilita cuando hay menús abiertos |
 
 ---
 
@@ -133,30 +161,11 @@ var ship_hp: int = 100
 var ship_hp_max: int = 100
 var ship_repair_cost: int = 5
 var current_island_name: String = "Tu isla"
-```
 
----
-
-## Variables principales de SupabaseClient
-
-```gdscript
-var _access_token: String = ""
+Variables principales de SupabaseClient
+gdscriptvar _access_token: String = ""
 var _user_id: String = ""
 var _refresh_token: String = ""
-```
-
----
-
-## Próximo sprint
-**Sprint 18** — Exportar a Android para probar con GPS real en móvil
-
-### Configuración Android (en progreso)
-- ✅ `project.godot`: sección `[display]` agregada (1280x720, stretch)
-- ⏳ `export_presets.cfg`: se crea desde el editor de Godot
-- ⏳ Android Build Templates: Proyecto → Instalar plantillas de Android
-- ⏳ Android SDK path: Editor → Configuración del Editor → Export → Android
-
----
 
 ## Plantilla para chat nuevo
 
