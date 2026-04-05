@@ -11,11 +11,11 @@ const ISLAND_RADIUS := 40.0
 const PLAYER_SPEED := 150.0
 const TRAVEL_SPEED := 80.0
 
-const SCALE: float = 10000.0  # píxeles por grado (ajustable)
+const SCALE: float = 10000.0
 
 var _player_lat: float = 0.0
 var _player_lng: float = 0.0
-var _map_center: Vector2  # centro de pantalla
+var _map_center: Vector2
 
 const DESTINATIONS := {
 	"isla_norte": {"pos": Vector2(200, 150), "name": "Isla Enana", "cost": 10},
@@ -39,29 +39,28 @@ var travel_total_distance: float = 0.0
 var joystick = null
 var context_button = null
 
+
 func _ready() -> void:
 	initialized = true
 	_map_center = get_viewport_rect().size / 2.0
 	GameManager.home_position_ready.connect(_on_home_ready)
 	var home_island := get_home_island()
-	if not islands.any(func(i):
-			return i.pos.distance_to(home_island) < 50):
+	if not islands.any(func(i): return i.pos.distance_to(home_island) < 50):
 		islands.insert(0, {
 			pos = home_island,
 			is_home = true,
 			name = "Tu isla"
 		})
-	player_screen_pos = home_island + Vector2(150, 0)
+	player_screen_pos = home_island
 	queue_redraw()
-
 	joystick = get_tree().get_first_node_in_group("joystick")
 	context_button = get_node_or_null("ContextActionButton")
 	if context_button:
 		context_button.action_pressed.connect(_on_context_pressed)
 
+
 func get_home_island() -> Vector2:
-	var center := get_viewport_rect().size / 2.0
-	return center
+	return get_viewport_rect().size / 2.0
 
 
 func _on_home_ready(lat: float, lng: float) -> void:
@@ -94,8 +93,8 @@ func _physics_process(delta: float) -> void:
 		)
 		player_screen_pos += direction * PLAYER_SPEED * delta
 		var vp := get_viewport_rect().size
-	player_screen_pos.x = clamp(player_screen_pos.x, 0, vp.x)
-	player_screen_pos.y = clamp(player_screen_pos.y, 0, vp.y)
+		player_screen_pos.x = clamp(player_screen_pos.x, 0, vp.x)
+		player_screen_pos.y = clamp(player_screen_pos.y, 0, vp.y)
 
 		nearby_island = {}
 		for island in islands:
@@ -128,6 +127,7 @@ func _physics_process(delta: float) -> void:
 
 	queue_redraw()
 
+
 func start_travel(destination: String) -> void:
 	if destination in DESTINATIONS:
 		travel_origin = player_screen_pos
@@ -136,11 +136,13 @@ func start_travel(destination: String) -> void:
 		travel_total_distance = player_screen_pos.distance_to(travel_target)
 		traveling = true
 
+
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		if event.pressed and event.keycode == KEY_E:
 			if not nearby_island.is_empty():
 				emit_signal("player_entered_island", nearby_island.pos)
+
 
 func _draw() -> void:
 	if not initialized:
@@ -154,76 +156,64 @@ func _draw() -> void:
 			radius = 50.0
 		draw_circle(island.pos, radius, color)
 	draw_circle(player_screen_pos, 20.0, PLAYER_COLOR)
-	
+
 	if not nearby_island.is_empty():
 		draw_string(
 			ThemeDB.fallback_font,
 			player_screen_pos + Vector2(-40, -30),
 			"E — Entrar",
 			HORIZONTAL_ALIGNMENT_LEFT,
-			-1,
-			14,
-			Color.WHITE
+			-1, 14, Color.WHITE
 		)
 	draw_string(
 		ThemeDB.fallback_font,
 		Vector2(20, 30),
 		"Doblones: " + str(GameManager.doblones),
 		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		16,
-		Color.WHITE
+		-1, 16, Color.WHITE
 	)
 	draw_string(
 		ThemeDB.fallback_font,
 		Vector2(20, 55),
 		"Barco: " + str(GameManager.ship_hp) + "/" + str(GameManager.ship_hp_max) + " HP",
 		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		16,
+		-1, 16,
 		Color(0.9, 0.4, 0.2) if GameManager.ship_hp < 30 else Color.WHITE
 	)
-	
+
 	if traveling:
-		draw_line(travel_origin, travel_target, 
-			Color(1, 1, 1, 0.3), 2.0)
-		draw_line(travel_origin, player_screen_pos,
-			Color(0.4, 0.8, 1.0, 0.8), 2.0)
-		
+		draw_line(travel_origin, travel_target, Color(1, 1, 1, 0.3), 2.0)
+		draw_line(travel_origin, player_screen_pos, Color(0.4, 0.8, 1.0, 0.8), 2.0)
+
 		var progress: float = 0.0
 		if travel_total_distance > 0:
-			progress = 1.0 - (player_screen_pos.distance_to(
-				travel_target) / travel_total_distance)
+			progress = 1.0 - (player_screen_pos.distance_to(travel_target) / travel_total_distance)
 		progress = clamp(progress, 0.0, 1.0)
-		
+
 		var bar_x: float = 20.0
 		var bar_y: float = 85.0
 		var bar_w: float = 300.0
 		var bar_h: float = 12.0
-		
-		draw_rect(Rect2(bar_x, bar_y, bar_w, bar_h),
-			Color(0.2, 0.2, 0.2, 0.8))
-		draw_rect(Rect2(bar_x, bar_y, bar_w * progress, bar_h),
-			Color(0.4, 0.8, 1.0))
-		
+
+		draw_rect(Rect2(bar_x, bar_y, bar_w, bar_h), Color(0.2, 0.2, 0.2, 0.8))
+		draw_rect(Rect2(bar_x, bar_y, bar_w * progress, bar_h), Color(0.4, 0.8, 1.0))
 		draw_string(
 			ThemeDB.fallback_font,
 			Vector2(bar_x, bar_y - 4),
-			"Rumbo a: " + travel_destination_name + 
-			"  " + str(int(progress * 100)) + "%",
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 13,
-			Color.WHITE
+			"Rumbo a: " + travel_destination_name + "  " + str(int(progress * 100)) + "%",
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE
 		)
-		
-		draw_circle(travel_target, 8.0, 
-			Color(0.4, 0.8, 1.0, 0.6))
+		draw_circle(travel_target, 8.0, Color(0.4, 0.8, 1.0, 0.6))
+
 
 func update_player_position(_gps_lat: float, _gps_lng: float) -> void:
 	queue_redraw()
 
+
 func _on_context_pressed() -> void:
 	if not nearby_island.is_empty():
 		emit_signal("player_entered_island", nearby_island.pos)
+
 
 func _exit_tree() -> void:
 	if joystick:

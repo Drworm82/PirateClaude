@@ -90,6 +90,7 @@ No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
 - Sprint 18: Export a Android funcional. Orientación retrato. Joystick virtual flotante (touch+mouse) en main.tscn. Input Map con move_up/down/left/right/interact.
 - Sprint 19: Botón contextual táctil. "Entrar" en GPS map cerca de islas. "Abordar" en dungeon cerca del bote. Joystick único en main.tscn encontrado por grupo. Tecla E sigue funcionando en PC como fallback.
 - Sprint 20: Todos los botones táctiles funcionando en Android. Solución: detección manual de toque con _input() en context_action_button.gd, destination_menu.gd y travel_result.gd usando get_global_rect().has_point(). Flujo completo funcional en Android: GPS → Entrar → Dungeon → Abordar → Menú destinos → Viaje → Resultado.
+- Sprint 21: GPS real en Android. GpsService autoload con polling. Jugador aparece en coordenadas reales al iniciar. Layout vertical corregido en gps_map, destination_menu y travel_result.
 
 ---
 
@@ -192,7 +193,7 @@ var _refresh_token: String = ""
 ---
 
 ## Próximo sprint
-**Sprint 20** — Pruebas en Android con GPS real
+**Sprint 22** — Por definir
 
 ---
 
@@ -201,7 +202,7 @@ var _refresh_token: String = ""
 ---
 Estoy desarrollando PirateWorld, RPG pirata en Godot 4.6.1.
 Stack: GDScript + Supabase + OpenCode en VSC.
-Sprints completados: 1-20.
+Sprints completados: 1-21.
 Último sprint: 20 — todos los botones táctiles funcionando en Android. Flujo completo funcional.
 En proceso: Sprint 21 — GPS real en Android.
 El contexto completo está en PIRATEWORLD_CONTEXT.md

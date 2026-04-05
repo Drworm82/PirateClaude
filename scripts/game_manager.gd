@@ -33,10 +33,11 @@ func _on_gps_error(reason: String) -> void:
 
 func _sync_home_position() -> void:
 	var data = {
+		"id": GameManager.player_id,
 		"lat_center": home_lat,
 		"lng_center": home_lng
 	}
-	SupabaseClient.update_player(data)
+	SupabaseClient.upsert("players", data)
 
 func initialize() -> void:
 	SupabaseClient.sign_in_anonymous()

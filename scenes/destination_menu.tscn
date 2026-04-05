@@ -7,51 +7,51 @@ layer = 10
 script = ExtResource("1_menu")
 
 [node name="Panel" type="Panel" parent="." unique_id=2106409727]
-offset_left = 390.0
-offset_top = 210.0
-offset_right = 890.0
-offset_bottom = 510.0
+anchors_preset = -1
+anchor_left = 0.05
+anchor_top = 0.15
+anchor_right = 0.95
+anchor_bottom = 0.5
 
-[node name="ContextLabel" type="Label" parent="Panel" unique_id=615156800]
-layout_mode = 0
-offset_left = 20.0
-offset_top = 60.0
-offset_right = 680.0
-offset_bottom = 100.0
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel" unique_id=672470992]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="ContextLabel" type="Label" parent="Panel/VBoxContainer" unique_id=615156800]
+layout_mode = 2
 horizontal_alignment = 1
 
-[node name="Label" type="Label" parent="Panel" unique_id=1460466122]
-layout_mode = 0
-offset_left = 20.0
-offset_top = 20.0
-offset_right = 480.0
-offset_bottom = 60.0
+[node name="Label" type="Label" parent="Panel/VBoxContainer" unique_id=1460466122]
+layout_mode = 2
 text = "Selecciona tu destino"
 horizontal_alignment = 1
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Panel" unique_id=672470992]
-layout_mode = 0
-offset_left = 50.0
-offset_top = 120.0
-offset_right = 450.0
-offset_bottom = 340.0
-
 [node name="Isla1" type="Button" parent="Panel/VBoxContainer" unique_id=368056014]
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 text = "Isla del Norte"
 
 [node name="Isla2" type="Button" parent="Panel/VBoxContainer" unique_id=838336783]
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 text = "Isla del Este"
 
 [node name="PuertoNeutral" type="Button" parent="Panel/VBoxContainer" unique_id=1030492055]
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 text = "Puerto Neutral"
 
-[node name="Cancelar" type="Button" parent="Panel" unique_id=1655376771]
-layout_mode = 0
-offset_left = 150.0
-offset_top = 360.0
-offset_right = 350.0
-offset_bottom = 400.0
+[node name="Control" type="Control" parent="Panel/VBoxContainer" unique_id=1307505007]
+layout_mode = 2
+
+[node name="Cancelar" type="Button" parent="Panel/VBoxContainer" unique_id=1655376771]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
 text = "Cancelar"
