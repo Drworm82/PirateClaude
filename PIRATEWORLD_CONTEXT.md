@@ -93,6 +93,7 @@ No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
 - Sprint 20: Todos los botones táctiles funcionando en Android. Solución: detección manual de toque con _input() en context_action_button.gd, destination_menu.gd y travel_result.gd usando get_global_rect().has_point(). Flujo completo funcional en Android: GPS → Entrar → Dungeon → Abordar → Menú destinos → Viaje → Resultado.
 - Sprint 21: GPS real en Android. GpsService autoload con polling via JavaClassWrapper + ActivityThread. Jugador aparece en coordenadas reales al iniciar. Layout vertical corregido en gps_map, destination_menu y travel_result.
 - Sprint 22: Verificación GPS real confirmada (19.42, -99.13 CDMX). Isla home anclada a coords GPS reales en Supabase. Debug overlay en pantalla con toggle debug_gps. Permiso INTERNET activado en export Android. Sistema auth + creación de jugador funcionando correctamente.
+- Sprint 23: Polling GPS continuo con requestLocationUpdates (3s/5m). Jugador siempre centrado en pantalla — islas se mueven relativas a su posición GPS real. Señal player_position_changed en GameManager conectada a _on_player_moved en gps_map. Debug GPS a 6 decimales de precisión. Pendiente verificar movimiento en campo abierto.
 
 ---
 
@@ -201,7 +202,7 @@ var _refresh_token: String = ""
 ---
 
 ## Próximo sprint
-**Sprint 23** — Por definir
+**Sprint 24** — Por definir
 
 ---
 
@@ -210,7 +211,7 @@ var _refresh_token: String = ""
 ---
 Estoy desarrollando PirateWorld, RPG pirata en Godot 4.6.1.
 Stack: GDScript + Supabase + OpenCode en VSC.
-Sprints completados: 1-22.
+Sprints completados: 1-23.
 Último sprint: 22 — Verificación GPS real confirmada (19.42, -99.13 CDMX).
 El contexto completo está en PIRATEWORLD_CONTEXT.md
 ---

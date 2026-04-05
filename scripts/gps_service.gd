@@ -33,45 +33,42 @@ func _ready() -> void:
 func _start_gps() -> void:
 	var activity_class = JavaClassWrapper.wrap("android.app.ActivityThread")
 	if activity_class == null:
-		last_lat = 1.1
+		emit_signal("location_error", "ActivityThread no disponible")
 		state = State.UNAVAILABLE
 		return
 
 	var app = activity_class.currentApplication()
 	if app == null:
-		last_lat = 1.2
+		emit_signal("location_error", "Application no disponible")
 		state = State.UNAVAILABLE
 		return
 
 	var context = app.getApplicationContext()
 	if context == null:
-		last_lat = 1.3
+		emit_signal("location_error", "Context no disponible")
 		state = State.UNAVAILABLE
 		return
-
-	last_lat = 1.5  # debug: contexto obtenido
 
 	_location_manager = context.getSystemService("location")
 	if _location_manager == null:
-		last_lat = 2.0
+		emit_signal("location_error", "LocationManager no disponible")
 		state = State.UNAVAILABLE
 		return
 
-	last_lat = 2.5  # debug: LocationManager obtenido
-
 	if not _location_manager.isProviderEnabled(PROVIDER):
-		last_lat = 3.0
+		emit_signal("location_error", "GPS desactivado en el dispositivo")
 		state = State.UNAVAILABLE
 		return
 
 	state = State.ACTIVE
-	last_lat = 4.0  # debug: todo OK
 
 	var last_known = _location_manager.getLastKnownLocation(PROVIDER)
 	if last_known != null:
 		last_lat = last_known.getLatitude()
 		last_lng = last_known.getLongitude()
 		emit_signal("location_updated", last_lat, last_lng)
+
+	_location_manager.requestLocationUpdates(PROVIDER, 3000, 5.0, null)
 
 
 func _process(delta: float) -> void:
@@ -84,11 +81,13 @@ func _process(delta: float) -> void:
 
 
 func _poll_location() -> void:
+	if _location_manager == null:
+		return
 	var loc = _location_manager.getLastKnownLocation(PROVIDER)
 	if loc != null:
 		var lat = loc.getLatitude()
 		var lng = loc.getLongitude()
-		if lat != last_lat or lng != last_lng:
+		if abs(lat - last_lat) > 0.000005 or abs(lng - last_lng) > 0.000005:
 			last_lat = lat
 			last_lng = lng
 			emit_signal("location_updated", lat, lng)

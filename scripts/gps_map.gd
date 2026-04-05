@@ -45,6 +45,7 @@ func _ready() -> void:
 	initialized = true
 	_map_center = get_viewport_rect().size / 2.0
 	GameManager.home_position_ready.connect(_on_home_ready)
+	GameManager.player_position_changed.connect(_on_player_moved)
 	var home_island := get_home_island()
 	if not islands.any(func(i): return i.pos.distance_to(home_island) < 50):
 		islands.insert(0, {
@@ -186,7 +187,7 @@ func _draw() -> void:
 		draw_string(
 			ThemeDB.fallback_font,
 			Vector2(20, 80),
-			"GPS: " + str(snappedf(GpsService.last_lat, 0.0001)) + ", " + str(snappedf(GpsService.last_lng, 0.0001)),
+			"GPS: " + str(snappedf(GpsService.last_lat, 0.000001)) + ", " + str(snappedf(GpsService.last_lng, 0.000001)),
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1, 14, Color(0.5, 1.0, 0.5)
 		)
@@ -240,6 +241,16 @@ func update_player_position(_gps_lat: float, _gps_lng: float) -> void:
 func _on_context_pressed() -> void:
 	if not nearby_island.is_empty():
 		emit_signal("player_entered_island", nearby_island.pos)
+
+
+func _on_player_moved(lat: float, lng: float) -> void:
+	if traveling:
+		return
+	_player_lat = lat
+	_player_lng = lng
+	player_screen_pos = _map_center
+	_place_islands_relative()
+	queue_redraw()
 
 
 func _exit_tree() -> void:

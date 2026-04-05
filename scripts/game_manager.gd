@@ -1,6 +1,7 @@
 extends Node
 
 signal home_position_ready(lat: float, lng: float)
+signal player_position_changed(lat: float, lng: float)
 
 var player_id: String = ""
 var doblones: int = 100
@@ -28,6 +29,7 @@ func _on_gps_location(lat: float, lng: float) -> void:
 		_sync_home_position()
 	else:
 		_pending_gps_sync = true
+	emit_signal("player_position_changed", lat, lng)
 
 
 func _on_gps_error(reason: String) -> void:
