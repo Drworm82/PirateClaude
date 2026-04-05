@@ -76,6 +76,9 @@ func _on_auth_completed(_result: int, response_code: int,
             emit_signal("auth_completed", true)
             return
     print("Auth error: ", response_code)
+    if GameManager.debug_gps:
+        GameManager.log_debug("auth code: " + str(response_code))
+        GameManager.log_debug("body: " + body.get_string_from_utf8().left(80))
     _clear_token()
     http_node.queue_free()
     emit_signal("auth_completed", false)

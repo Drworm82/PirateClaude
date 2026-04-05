@@ -62,6 +62,7 @@ No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
 ---
 
 ## Autoloads registrados en project.godot
+0. `GpsService` → `scripts/gps_service.gd`
 1. `SupabaseClient` → `scripts/supabase.gd`
 2. `GameManager` → `scripts/game_manager.gd`
 3. `TravelEvents` → `scripts/travel_events.gd`
@@ -90,7 +91,8 @@ No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
 - Sprint 18: Export a Android funcional. Orientación retrato. Joystick virtual flotante (touch+mouse) en main.tscn. Input Map con move_up/down/left/right/interact.
 - Sprint 19: Botón contextual táctil. "Entrar" en GPS map cerca de islas. "Abordar" en dungeon cerca del bote. Joystick único en main.tscn encontrado por grupo. Tecla E sigue funcionando en PC como fallback.
 - Sprint 20: Todos los botones táctiles funcionando en Android. Solución: detección manual de toque con _input() en context_action_button.gd, destination_menu.gd y travel_result.gd usando get_global_rect().has_point(). Flujo completo funcional en Android: GPS → Entrar → Dungeon → Abordar → Menú destinos → Viaje → Resultado.
-- Sprint 21: GPS real en Android. GpsService autoload con polling. Jugador aparece en coordenadas reales al iniciar. Layout vertical corregido en gps_map, destination_menu y travel_result.
+- Sprint 21: GPS real en Android. GpsService autoload con polling via JavaClassWrapper + ActivityThread. Jugador aparece en coordenadas reales al iniciar. Layout vertical corregido en gps_map, destination_menu y travel_result.
+- Sprint 22: Verificación GPS real confirmada (19.42, -99.13 CDMX). Isla home anclada a coords GPS reales en Supabase. Debug overlay en pantalla con toggle debug_gps. Permiso INTERNET activado en export Android. Sistema auth + creación de jugador funcionando correctamente.
 
 ---
 
@@ -190,10 +192,16 @@ var _user_id: String = ""
 var _refresh_token: String = ""
 ```
 
+## Debug overlay
+- Controlado por `debug_gps: bool` en `gps_map.gd`
+- Muestra: coordenadas GPS, estado GpsService, log de GameManager
+- Para desactivar en producción: cambiar `debug_gps = true` a `false`
+- Supabase auth logs también se suprimen con el mismo toggle
+
 ---
 
 ## Próximo sprint
-**Sprint 22** — Por definir
+**Sprint 23** — Por definir
 
 ---
 
@@ -202,8 +210,7 @@ var _refresh_token: String = ""
 ---
 Estoy desarrollando PirateWorld, RPG pirata en Godot 4.6.1.
 Stack: GDScript + Supabase + OpenCode en VSC.
-Sprints completados: 1-21.
-Último sprint: 20 — todos los botones táctiles funcionando en Android. Flujo completo funcional.
-En proceso: Sprint 21 — GPS real en Android.
+Sprints completados: 1-22.
+Último sprint: 22 — Verificación GPS real confirmada (19.42, -99.13 CDMX).
 El contexto completo está en PIRATEWORLD_CONTEXT.md
 ---

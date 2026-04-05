@@ -24,6 +24,7 @@ const DESTINATIONS := {
 }
 
 var player_screen_pos := Vector2(360, 640)
+var debug_gps: bool = true
 var islands: Array[Dictionary] = [
 	{pos = Vector2(200, 150), name = "Isla Enana"},
 	{pos = Vector2(500, 350), name = "Isla del Cocinero"},
@@ -180,6 +181,32 @@ func _draw() -> void:
 		-1, 16,
 		Color(0.9, 0.4, 0.2) if GameManager.ship_hp < 30 else Color.WHITE
 	)
+
+	if debug_gps:
+		draw_string(
+			ThemeDB.fallback_font,
+			Vector2(20, 80),
+			"GPS: " + str(snappedf(GpsService.last_lat, 0.0001)) + ", " + str(snappedf(GpsService.last_lng, 0.0001)),
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1, 14, Color(0.5, 1.0, 0.5)
+		)
+		draw_string(
+			ThemeDB.fallback_font,
+			Vector2(20, 100),
+			"Estado: " + str(GpsService.state),
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1, 14, Color(0.5, 1.0, 0.5)
+		)
+		var log_y: float = 120.0
+		for line in GameManager.debug_log:
+			draw_string(
+				ThemeDB.fallback_font,
+				Vector2(20, log_y),
+				line,
+				HORIZONTAL_ALIGNMENT_LEFT,
+				-1, 12, Color(1.0, 1.0, 0.5)
+			)
+			log_y += 16.0
 
 	if traveling:
 		draw_line(travel_origin, travel_target, Color(1, 1, 1, 0.3), 2.0)

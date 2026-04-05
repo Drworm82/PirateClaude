@@ -22,48 +22,50 @@ const POLL_INTERVAL: float = 5.0
 func _ready() -> void:
 	_is_android = OS.get_name() == "Android"
 	if _is_android:
-		_request_permission()
+		OS.request_permissions()
+		await get_tree().create_timer(1.0).timeout
+		_start_gps()
 	else:
 		state = State.ACTIVE
 		call_deferred("_emit_fallback")
 
 
-func _emit_fallback() -> void:
-	emit_signal("location_updated", last_lat, last_lng)
-
-
-func _request_permission() -> void:
-	state = State.WAITING_PERMISSION
-	OS.request_permissions()
-
-
-func _on_request_permissions_result(permissions: PackedStringArray, granted: PackedStringArray) -> void:
-	if "android.permission.ACCESS_FINE_LOCATION" in granted:
-		_start_gps()
-	else:
-		state = State.UNAVAILABLE
-		emit_signal("location_error", "Permiso de ubicación denegado")
-
-
 func _start_gps() -> void:
-	var activity = Engine.get_singleton("GodotFragment")
-	if activity == null:
-		emit_signal("location_error", "No se pudo acceder al contexto Android")
+	var activity_class = JavaClassWrapper.wrap("android.app.ActivityThread")
+	if activity_class == null:
+		last_lat = 1.1
 		state = State.UNAVAILABLE
 		return
 
-	_location_manager = activity.getSystemService("location")
-	if _location_manager == null:
-		emit_signal("location_error", "LocationManager no disponible")
+	var app = activity_class.currentApplication()
+	if app == null:
+		last_lat = 1.2
 		state = State.UNAVAILABLE
 		return
+
+	var context = app.getApplicationContext()
+	if context == null:
+		last_lat = 1.3
+		state = State.UNAVAILABLE
+		return
+
+	last_lat = 1.5  # debug: contexto obtenido
+
+	_location_manager = context.getSystemService("location")
+	if _location_manager == null:
+		last_lat = 2.0
+		state = State.UNAVAILABLE
+		return
+
+	last_lat = 2.5  # debug: LocationManager obtenido
 
 	if not _location_manager.isProviderEnabled(PROVIDER):
-		emit_signal("location_error", "GPS desactivado en el dispositivo")
+		last_lat = 3.0
 		state = State.UNAVAILABLE
 		return
 
 	state = State.ACTIVE
+	last_lat = 4.0  # debug: todo OK
 
 	var last_known = _location_manager.getLastKnownLocation(PROVIDER)
 	if last_known != null:
