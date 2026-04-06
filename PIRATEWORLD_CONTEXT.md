@@ -94,6 +94,8 @@ No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
 - Sprint 21: GPS real en Android. GpsService autoload con polling via JavaClassWrapper + ActivityThread. Jugador aparece en coordenadas reales al iniciar. Layout vertical corregido en gps_map, destination_menu y travel_result.
 - Sprint 22: Verificación GPS real confirmada (19.42, -99.13 CDMX). Isla home anclada a coords GPS reales en Supabase. Debug overlay en pantalla con toggle debug_gps. Permiso INTERNET activado en export Android. Sistema auth + creación de jugador funcionando correctamente.
 - Sprint 23: Polling GPS continuo con requestLocationUpdates (3s/5m). Jugador siempre centrado en pantalla — islas se mueven relativas a su posición GPS real. Señal player_position_changed en GameManager conectada a _on_player_moved en gps_map. Debug GPS a 6 decimales de precisión. Pendiente verificar movimiento en campo abierto.
+- Sprint 24: Mock UI aprobado (vista GPS sin nombres, mapa con ficha de isla progresiva, navbar inferior, sheet modal). Diseño de sistema de conocimiento de islas definido (5 niveles). Tablas islands y player_island_knowledge creadas en Supabase.
+- Sprint 25: Islas cargadas desde Supabase. Isla home creada con coords GPS reales (espera GPS antes de crear). Jugador centrado sobre isla home al iniciar. Sin movimiento libre en vista GPS. Joystick desactivado en vista GPS. JWT auto-refresh implementado. _place_islands_relative() usa GpsService directo.
 
 ---
 
@@ -167,6 +169,8 @@ No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
 | **Mapa overlay** | Tecla M abre/cierra overlay. Escape también cierra. Pestaña "Isla" muestra dungeon con jugador y zona de salida. Pestaña "Océano" muestra islas conocidas con nombres |
 | **Joystick virtual** | Único en main.tscn. Flotante, aparece al tocar. Funciona en Android (touch) y PC (mouse). Se deshabilita con menús |
 | **Botón contextual** | Táctil, aparece cerca de objetos interactuables. "Entrar" en GPS, "Abordar" en dungeon |
+| **Islas desde Supabase** | Islas cargadas desde tabla islands. Isla home creada con coords GPS reales al primer inicio. player_island_knowledge controla nivel de conocimiento (1-5) |
+| **Sin movimiento libre GPS** | En vista GPS el jugador no puede moverse con joystick. Solo puede entrar al dungeon. La posición se actualiza por GPS real |
 
 ---
 
@@ -201,8 +205,40 @@ var _refresh_token: String = ""
 
 ---
 
+## Sistema de conocimiento de islas
+
+### Filosofía
+- Vista GPS: islas como formas puras sin nombres — percepción sensorial directa
+- Mapa: conocimiento acumulado, ficha construida progresivamente
+- El conocimiento es universal (mismo para todos) pero se desbloquea por jugador
+- Zona Segura siempre visible con nombre desde el inicio
+
+### Niveles de conocimiento (1-5)
+1. Localización — solo verla desde el mar
+2. Nombre — visitar la isla + hablar con NPC, o conseguir mapa
+3. Rasgos físicos — explorar la isla
+4. Rasgos humanos — interactuar con habitantes
+5. Economía — hablar con NPC económico, o comerciar
+
+### Tabla islands (Supabase)
+id, nombre, lat, lng, tipo (normal/hub/zona_segura), terreno, relieve, costa, faccion, poblacion, recursos (text[]), comercio (text[]), seed
+
+### Tabla player_island_knowledge (Supabase)
+player_id, island_id, nivel (1-5)
+
+### UI del mapa
+- Sheet modal que sube desde abajo (botón Mapa en navbar)
+- Pestañas: Océano / Isla
+- Toca isla en el mapa → ficha con 5 campos, bloqueados según nivel
+- Barra de 5 puntos muestra progreso de conocimiento
+
+### Navbar inferior
+Inventario | ZARPAR | Mapa
+
+---
+
 ## Próximo sprint
-**Sprint 24** — Por definir
+**Sprint 26** — Por definir
 
 ---
 
@@ -211,7 +247,7 @@ var _refresh_token: String = ""
 ---
 Estoy desarrollando PirateWorld, RPG pirata en Godot 4.6.1.
 Stack: GDScript + Supabase + OpenCode en VSC.
-Sprints completados: 1-23.
-Último sprint: 22 — Verificación GPS real confirmada (19.42, -99.13 CDMX).
+Sprints completados: 1-25.
+Último sprint: 25 — Islas desde Supabase.
 El contexto completo está en PIRATEWORLD_CONTEXT.md
 ---

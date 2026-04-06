@@ -30,6 +30,10 @@ func _ready() -> void:
 		call_deferred("_emit_fallback")
 
 
+func _emit_fallback() -> void:
+	emit_signal("location_updated", last_lat, last_lng)
+
+
 func _start_gps() -> void:
 	var activity_class = JavaClassWrapper.wrap("android.app.ActivityThread")
 	if activity_class == null:

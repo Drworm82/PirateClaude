@@ -25,11 +25,8 @@ const DESTINATIONS := {
 
 var player_screen_pos := Vector2(360, 640)
 var debug_gps: bool = true
-var islands: Array[Dictionary] = [
-	{pos = Vector2(200, 150), name = "Isla Enana"},
-	{pos = Vector2(500, 350), name = "Isla del Cocinero"},
-	{pos = Vector2(800, 200), name = "Isla Drum Jr."}
-]
+var islands: Array = []
+var island_knowledge: Dictionary = {}
 var nearby_island: Dictionary = {}
 var initialized := false
 var traveling: bool = false
@@ -46,19 +43,18 @@ func _ready() -> void:
 	_map_center = get_viewport_rect().size / 2.0
 	GameManager.home_position_ready.connect(_on_home_ready)
 	GameManager.player_position_changed.connect(_on_player_moved)
-	var home_island := get_home_island()
-	if not islands.any(func(i): return i.pos.distance_to(home_island) < 50):
-		islands.insert(0, {
-			pos = home_island,
-			is_home = true,
-			name = "Tu isla"
-		})
-	player_screen_pos = home_island
+	# Esperar a que GPS y auth estén listos
+	await get_tree().create_timer(3.0).timeout
+	await _load_islands_from_supabase()
+
+	player_screen_pos = _map_center
 	queue_redraw()
 	joystick = get_tree().get_first_node_in_group("joystick")
 	context_button = get_node_or_null("ContextActionButton")
 	if context_button:
 		context_button.action_pressed.connect(_on_context_pressed)
+	if joystick:
+		joystick.set_enabled(false)
 
 
 func get_home_island() -> Vector2:
@@ -68,8 +64,12 @@ func get_home_island() -> Vector2:
 func _on_home_ready(lat: float, lng: float) -> void:
 	_player_lat = lat
 	_player_lng = lng
-	_place_player_at_center()
-	_place_islands_relative()
+	_map_center = get_viewport_rect().size / 2.0
+	player_screen_pos = _map_center
+	if islands.size() > 0:
+		_place_islands_relative()
+		_center_on_home_island()
+	queue_redraw()
 
 
 func _place_player_at_center() -> void:
@@ -77,9 +77,15 @@ func _place_player_at_center() -> void:
 
 
 func _place_islands_relative() -> void:
+	if _player_lat == 0.0:
+		_player_lat = GpsService.last_lat
+		_player_lng = GpsService.last_lng
+		_map_center = get_viewport_rect().size / 2.0
+		player_screen_pos = _map_center
 	for island in islands:
-		if "lat" in island and "lng" in island:
-			island.pos = _world_to_screen(island.lat, island.lng)
+		var lat: float = island.get("lat", 0.0)
+		var lng: float = island.get("lng", 0.0)
+		island["pos"] = _world_to_screen(lat, lng)
 
 
 func _world_to_screen(lat: float, lng: float) -> Vector2:
@@ -90,14 +96,6 @@ func _world_to_screen(lat: float, lng: float) -> Vector2:
 
 func _physics_process(delta: float) -> void:
 	if not traveling:
-		var direction := Input.get_vector(
-			"move_left", "move_right", "move_up", "move_down"
-		)
-		player_screen_pos += direction * PLAYER_SPEED * delta
-		var vp := get_viewport_rect().size
-		player_screen_pos.x = clamp(player_screen_pos.x, 0, vp.x)
-		player_screen_pos.y = clamp(player_screen_pos.y, 0, vp.y)
-
 		nearby_island = {}
 		for island in islands:
 			if player_screen_pos.distance_to(island.pos) < 80.0:
@@ -107,12 +105,8 @@ func _physics_process(delta: float) -> void:
 		if context_button != null:
 			if not nearby_island.is_empty():
 				context_button.show_action("Entrar")
-				if joystick:
-					joystick.set_enabled(false)
 			else:
 				context_button.hide_action()
-				if joystick:
-					joystick.set_enabled(true)
 	else:
 		if context_button != null:
 			context_button.hide_action()
@@ -151,11 +145,17 @@ func _draw() -> void:
 		return
 	draw_rect(Rect2(Vector2(-2000, -2000), Vector2(6000, 6000)), OCEAN_COLOR)
 	for island in islands:
-		var color := ISLAND_COLOR
-		var radius := ISLAND_RADIUS
-		if island.get("is_home", false):
-			color = Color(0.8, 0.6, 0.2)
-			radius = 50.0
+		var color: Color
+		var radius: float = ISLAND_RADIUS
+		match island.get("tipo", "normal"):
+			"zona_segura":
+				color = Color(0.23, 0.35, 0.54)
+				radius = 35.0
+			"home":
+				color = Color(0.8, 0.6, 0.2)
+				radius = 50.0
+			"normal":
+				color = ISLAND_COLOR
 		draw_circle(island.pos, radius, color)
 	draw_circle(player_screen_pos, 20.0, PLAYER_COLOR)
 
@@ -163,7 +163,7 @@ func _draw() -> void:
 		draw_string(
 			ThemeDB.fallback_font,
 			player_screen_pos + Vector2(-40, -30),
-			"E — Entrar",
+			"Entrar",
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1, 14, Color.WHITE
 		)
@@ -251,6 +251,56 @@ func _on_player_moved(lat: float, lng: float) -> void:
 	player_screen_pos = _map_center
 	_place_islands_relative()
 	queue_redraw()
+
+
+func _load_islands_from_supabase() -> void:
+	var raw_islands: Array = await GameManager.load_islands()
+	var raw_knowledge: Array = await GameManager.load_island_knowledge()
+	
+	island_knowledge = {}
+	for k in raw_knowledge:
+		island_knowledge[k.get("island_id", "")] = k.get("nivel", 1)
+	
+	islands = []
+	for isl in raw_islands:
+		var island_id: String = isl.get("id", "")
+		var nivel: int = island_knowledge.get(island_id, 0)
+		islands.append({
+			"id": island_id,
+			"pos": Vector2(0, 0),
+			"lat": isl.get("lat", 0.0),
+			"lng": isl.get("lng", 0.0),
+			"nombre": isl.get("nombre", "???"),
+			"tipo": isl.get("tipo", "normal"),
+			"terreno": isl.get("terreno", ""),
+			"relieve": isl.get("relieve", ""),
+			"costa": isl.get("costa", ""),
+			"faccion": isl.get("faccion", ""),
+			"poblacion": isl.get("poblacion", ""),
+			"recursos": isl.get("recursos", []),
+			"comercio": isl.get("comercio", []),
+			"nivel": nivel
+		})
+	
+	GameManager.log_debug("player_lat: " + str(snappedf(_player_lat, 0.0001)))
+	GameManager.log_debug("islands: " + str(islands.size()))
+	for isl in islands:
+		GameManager.log_debug(isl.get("tipo","?") + " lat:" + str(snappedf(isl.get("lat",0.0), 0.001)))
+	
+	_place_islands_relative()
+	_center_on_home_island()
+	queue_redraw()
+
+
+func _center_on_home_island() -> void:
+	for island in islands:
+		if island.get("tipo", "") == "home":
+			GameManager.log_debug("home pos: " + str(island.pos))
+			GameManager.log_debug("player: " + str(player_screen_pos))
+			player_screen_pos = island.pos
+			GameManager.log_debug("after: " + str(player_screen_pos))
+			return
+	GameManager.log_debug("home NOT found")
 
 
 func _exit_tree() -> void:

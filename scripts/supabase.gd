@@ -71,6 +71,9 @@ func _on_auth_completed(_result: int, response_code: int,
             if "refresh_token" in json:
                 _refresh_token = json.refresh_token
             _save_token()
+            if "expires_in" in json:
+                var expires_in: int = int(json.expires_in)
+                get_tree().create_timer(max(expires_in - 60, 60)).timeout.connect(_do_refresh)
             print("Auth exitosa: ", _user_id)
             http_node.queue_free()
             emit_signal("auth_completed", true)
