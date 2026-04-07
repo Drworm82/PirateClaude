@@ -15,41 +15,51 @@
 
 | Archivo | Descripción |
 |---------|-------------|
-| `main.gd` | Controlador principal. Gestiona transiciones GPS↔Dungeon, viajes, eventos, mapas |
+| `main.gd` | Controlador principal. Gestiona transiciones GPS↔Dungeon, viajes, eventos, mapas. Contiene SailButton para abrir DestinationMenu desde vista GPS |
 | `gps_map.gd` | Vista del océano. Renderiza islas, jugador, travel marker, HUD de doblones/HP. Botón contextual "Entrar" cerca de islas |
 | `dungeon.gd` | Vista de isla. Generación procedural, zona de salida, botón contextual "Abordar" cerca del bote |
 | `player.gd` | Movimiento WASD/joystick, límites de mapa, rotación según dirección |
 | `boat.gd` | Sprite del bote, detección de proximidad, señal de embarque |
-| `destination_menu.gd` | UI de selección de destino con 3 botones. Deshabilita joystick al abrirse |
 | `travel_events.gd` | Generador de eventos aleatorios (tesoro/tormenta/nada) |
 | `travel_result.gd` | Overlay de resultado de viaje con título, descripción, delta de doblones |
 | `map_overlay.gd` | Sistema de mapas con pestañas (Isla/Océano) y dibujo procedural |
 | `map_display.gd` | Canvas de dibujo que delega al overlay |
 | `map_button.gd` | Singleton para abrir mapa con tecla M |
-| `game_manager.gd` | Estado global del jugador, sync con Supabase, HP del barco |
-| `supabase.gd` | Cliente REST, auth anónima, JWT refresh token |
+| `game_manager.gd` | Estado global del jugador, sync con Supabase, HP del barco, islands_cache, home_island_id |
+| `supabase.gd` | Cliente REST, auth anónima, JWT refresh token, método supabase_rpc() para llamar funciones de Supabase |
 | `supabase_config.gd` | Credenciales de Supabase (NO committing a git) |
 | `island_generator.gd` | Generación procedural de islas con Perlin (reservado para Sprint 16+) |
 | `virtual_joystick.gd` | Joystick virtual flotante. Maneja touch y mouse. Inyecta Input actions. Vive en main.tscn |
 | `context_action_button.gd` | Botón contextual táctil. Aparece/desaparece según proximidad. Layer 20 |
 
+### Autoloads (`autoloads/`)
+
+| Archivo | Descripción |
+|---------|-------------|
+| `GameState.gd` | Puente de acceso rápido a GameManager. Expone get_player_id(), get_current_island_id(), get_doblones_onboard(), get_distance_to(), set_current_island_id() |
+| `VoyageManager.gd` | Maneja viajes entre islas. Timer en tiempo real con timestamps en Supabase. Signals: voyage_updated, voyage_arrived, voyage_drifting |
+
 ### Escenas (`scenes/`)
 
 | Archivo | Descripción |
 |---------|-------------|
-| `main.tscn` | Escena raíz. Contiene VirtualJoystick (único en el proyecto) |
+| `main.tscn` | Escena raíz. Contiene VirtualJoystick, SailButton y VoyageHUD |
 | `gps_map.tscn` | Vista océano. Contiene ContextActionButton instanciado en runtime |
 | `dungeon.tscn` | Vista isla con TileMap, Player, Boat. ContextActionButton instanciado en runtime |
 | `player.tscn` | Nodo del jugador con sprite y Camera2D |
 | `boat.tscn` | Sprite del bote en la orilla sur |
-| `destination_menu.tscn` | CanvasLayer con panel de destinos (Layer 20) |
+| `destinationmenu.tscn` | CanvasLayer con lista de islas alcanzables desde Supabase. Detección manual de touch |
+| `voyagehud.tscn` | CanvasLayer (Layer 10) con timer de viaje y doblones a bordo. Invisible cuando no hay viaje activo |
 | `travel_result.tscn` | CanvasLayer con panel de resultado |
 | `map_overlay.tscn` | Overlay completo del mapa |
 | `virtual_joystick.tscn` | CanvasLayer (Layer 2) → JoystickControl (Control, Full Rect, grupo: joystick) → OuterRing + InnerDot |
 | `context_action_button.tscn` | CanvasLayer (Layer 20) → Button (Bottom Center, 200x60) |
 
-### Assets
-No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
+### Escenas raíz (`res://`)
+
+| Archivo | Descripción |
+|---------|-------------|
+| `DestinationMenu.gd` | Script del menú de destinos. extends CanvasLayer. Llama supabase_rpc(get_reachable_islands), detección manual de touch, emite señal menu_closed |
 
 ---
 
@@ -57,7 +67,11 @@ No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
 - URL: ver `supabase_config.gd`
 - Tablas:
   - `players`: id, username, doblones, prestigio, lat_center, lng_center, ship_hp, inventario, equipamiento, isla_semilla, fecha_creacion, ultima_conexion
-  - `islands`: id, player_id, seed, lat, lng, construcciones, ultima_visita
+  - `islands`: id, nombre, lat, lng, tipo, terreno, relieve, costa, faccion, poblacion, recursos, comercio, seed
+  - `player_island_knowledge`: player_id, island_id, nivel (1-5)
+  - `voyages`: id, player_id, origin_island_id, destination_island_id, ship_type, departure_time, arrival_time, doblones_at_departure, doblones_per_km, distance_km, status (sailing/arrived/drifting)
+- Funciones RPC:
+  - `get_reachable_islands(origin_id, max_range_km)` — devuelve islas dentro del rango ordenadas por distancia
 
 ---
 
@@ -67,6 +81,8 @@ No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
 2. `GameManager` → `scripts/game_manager.gd`
 3. `TravelEvents` → `scripts/travel_events.gd`
 4. `MapButton` → `scripts/map_button.gd`
+5. `GameState` → `autoloads/GameState.gd`
+6. `VoyageManager` → `autoloads/VoyageManager.gd`
 
 ---
 
@@ -86,91 +102,110 @@ No hay assets gráficos en el repo actualmente. Sprites reservados para futuro.
 - Sprint 13: Eventos de viaje (tesoro/tormenta/nada)
 - Sprint 14: Salud del barco + costo de viaje en doblones
 - Sprint 15: Sistema de mapas (tecla M abre overlay, Escape cierra, pestaña Isla muestra mapa local del dungeon, pestaña Océano muestra mapa global con nombres de islas)
-- Sprint 16: Menú de destinos mejorado con nombres de islas (Isla Enana, Isla del Cocinero, Puerto Loguetown), contexto de viaje (desde/hacia/costo), HP del barco visible, botones deshabilitados sin recursos
-- Sprint 17: Barra de progreso del viaje, línea de ruta blanca origen-destino, línea azul de recorrido, texto "Rumbo a: [destino] X%", marcador de destino en el mapa
-- Sprint 18: Export a Android funcional. Orientación retrato. Joystick virtual flotante (touch+mouse) en main.tscn. Input Map con move_up/down/left/right/interact.
-- Sprint 19: Botón contextual táctil. "Entrar" en GPS map cerca de islas. "Abordar" en dungeon cerca del bote. Joystick único en main.tscn encontrado por grupo. Tecla E sigue funcionando en PC como fallback.
-- Sprint 20: Todos los botones táctiles funcionando en Android. Solución: detección manual de toque con _input() en context_action_button.gd, destination_menu.gd y travel_result.gd usando get_global_rect().has_point(). Flujo completo funcional en Android: GPS → Entrar → Dungeon → Abordar → Menú destinos → Viaje → Resultado.
-- Sprint 21: GPS real en Android. GpsService autoload con polling via JavaClassWrapper + ActivityThread. Jugador aparece en coordenadas reales al iniciar. Layout vertical corregido en gps_map, destination_menu y travel_result.
-- Sprint 22: Verificación GPS real confirmada (19.42, -99.13 CDMX). Isla home anclada a coords GPS reales en Supabase. Debug overlay en pantalla con toggle debug_gps. Permiso INTERNET activado en export Android. Sistema auth + creación de jugador funcionando correctamente.
-- Sprint 23: Polling GPS continuo con requestLocationUpdates (3s/5m). Jugador siempre centrado en pantalla — islas se mueven relativas a su posición GPS real. Señal player_position_changed en GameManager conectada a _on_player_moved en gps_map. Debug GPS a 6 decimales de precisión. Pendiente verificar movimiento en campo abierto.
-- Sprint 24: Mock UI aprobado (vista GPS sin nombres, mapa con ficha de isla progresiva, navbar inferior, sheet modal). Diseño de sistema de conocimiento de islas definido (5 niveles). Tablas islands y player_island_knowledge creadas en Supabase.
-- Sprint 25: Islas cargadas desde Supabase. Isla home creada con coords GPS reales (espera GPS antes de crear). Jugador centrado sobre isla home al iniciar. Sin movimiento libre en vista GPS. Joystick desactivado en vista GPS. JWT auto-refresh implementado. _place_islands_relative() usa GpsService directo.
+- Sprint 16: Menú de destinos mejorado con nombres de islas, contexto de viaje, HP del barco visible
+- Sprint 17: Barra de progreso del viaje, línea de ruta blanca origen-destino, línea azul de recorrido
+- Sprint 18: Export a Android funcional. Joystick virtual flotante en main.tscn
+- Sprint 19: Botón contextual táctil. "Entrar" en GPS map, "Abordar" en dungeon
+- Sprint 20: Todos los botones táctiles funcionando en Android. Detección manual con get_global_rect().has_point()
+- Sprint 21: GPS real en Android via JavaClassWrapper + ActivityThread
+- Sprint 22: Verificación GPS real confirmada (19.42, -99.13 CDMX). Isla home anclada a coords GPS reales
+- Sprint 23: Polling GPS continuo. Jugador siempre centrado, islas se mueven relativas a posición GPS real
+- Sprint 24: Diseño de sistema de conocimiento de islas (5 niveles). Tablas islands y player_island_knowledge creadas
+- Sprint 25: Islas cargadas desde Supabase. Isla home creada con coords GPS reales. Jugador centrado sobre isla home. Sin movimiento libre en vista GPS
+- Sprint 26: Sistema de viaje entre islas. Menú de destinos desde Supabase (get_reachable_islands RPC). VoyageManager con timer en tiempo real (timestamps en Supabase, persiste si se cierra la app). VoyageHUD con countdown y doblones a bordo. Doblones como combustible consumido gradualmente. Estado a la deriva si se agotan. GameState como puente a GameManager. Detección manual de touch en menú de destinos
+
+---
+
+## Sistema de barcos
+
+| Embarcación | Velocidad | HP | Cañones | Carga | Tripulación | Alcance |
+|-------------|-----------|-----|---------|-------|-------------|----------|
+| Lancha (inicial) | 5 km/h (9 km/h escape) | bajo | 0 | 1 slot | 1–4 (2 seguros) | ~5 km estricto |
+| Catamarán | 35–50 km/h | 120 | 1 par | 3 slots | 1–4 | dinámico |
+| Barco mediano | 20 km/h | 200 | 2 pares | 6 slots | 4–8 | dinámico |
+| Galeón | 10–15 km/h | alto | máximo | máximo | 8–15 | dinámico |
+
+### Reglas de alcance
+- Lancha: límite físico de 5 km. Se hunde si lo supera
+- Demás barcos: alcance dinámico limitado por doblones a bordo
+- Doblones = combustible. Se consumen gradualmente (doblones_per_km). No se descontar al zarpar
+- Sin doblones a mitad del viaje = estado á la deriva (vulnerable a PvP)
+- El atacante puede saquear los doblones que queden a bordo
+- Reducción de tiempo de viaje: solo con anuncios (monetización principal)
+
+---
+
+## VoyageManager — arquitectura
+
+```gdscript
+const SHIP_SPEED_KMH: float = 5.0   # lancha
+const SHIP_RANGE_KM: float = 5.0    # lancha
+const DOBLONES_PER_KM: int = 2
+```
+
+- `start_voyage(destination_island_id)` — crea registro en tabla voyages, guarda timestamps
+- `check_active_voyage()` — al iniciar app, recupera viaje activo si existe
+- `_tick()` — cada segundo: calcula segundos restantes y doblones consumidos
+- `_set_arrived()` — actualiza status en Supabase, actualiza GameState.current_island_id
+- `_set_drifting()` — actualiza status en Supabase cuando doblones llegan a 0
+- Signals: `voyage_updated(seconds_remaining, doblones_remaining)`, `voyage_arrived()`, `voyage_drifting()`
+
+---
+
+## GameState — puente a GameManager
+
+```gdscript
+get_player_id() → GameManager.player_id
+get_current_island_id() → GameManager.home_island_id
+get_current_island_lat() → GameManager.home_lat
+get_current_island_lng() → GameManager.home_lng
+get_doblones_onboard() → GameManager.doblones
+set_current_island_id(id) → GameManager.home_island_id = id
+get_distance_to(island_id) → haversine desde isla actual a target (usa islands_cache)
+```
+
+---
+
+## Patrones técnicos establecidos
+
+### Android GPS
+```gdscript
+JavaClassWrapper → ActivityThread → currentApplication() → getApplicationContext() → getSystemService("location")
+```
+
+### Touch en Android
+- Los `Button` nativos de Godot NO detectan touch en Android en este proyecto
+- Solución: detección manual en `_input()` con `InputEventScreenTouch` + `get_global_rect().has_point(event.position)`
+- Aplica a: ContextActionButton, DestinationMenu, TravelResult, y cualquier botón nuevo
+
+### Supabase auth
+- Tokens guardados en `user://auth.cfg` via ConfigFile
+- JWT auto-refresh implementado
+- `_clear_token()` solo para debug (comentado en producción)
+
+### Autoloads
+- No usar `class_name` en Autoloads en Godot 4
+- GDScript strict mode: anotaciones de tipo explícitas en todas las variables y funciones
+
+### SupabaseClient.supabase_rpc()
+- Renombrado de `rpc()` a `supabase_rpc()` porque `rpc` es función reservada del sistema multiplayer de Godot 4
+- Patrón: devuelve HTTPRequest, usar `await http.request_completed`
 
 ---
 
 ## Arquitectura de controles móviles
 
 ### VirtualJoystick
-- **Ubicación**: solo en `main.tscn` (único en todo el proyecto)
+- **Ubicación**: solo en `main.tscn`
 - **Encontrado por**: `get_tree().get_first_node_in_group("joystick")`
-- **Layer**: 2 (debajo de todo UI)
-- `JoystickControl` en grupo `joystick`
-- Usa `_unhandled_input` para no bloquear botones UI
-- Inyecta `Input.action_press/release` para move_left/right/up/down
-- `set_enabled(false/true)` para desactivar cuando hay menús
+- **Layer**: 2
+- `set_enabled(false/true)` para desactivar con menús
 
 ### ContextActionButton
 - **Ubicación**: instanciado en runtime en `gps_map.gd` y `dungeon.gd`
-- **Layer**: 20 (encima de todo)
-- Aparece solo cuando el jugador está cerca de un objeto interactuable
+- **Layer**: 20
 - En GPS map: "Entrar" a menos de 80px de una isla
 - En dungeon: "Abordar" a menos de 80px del bote
-- Cuando aparece: joystick se desactiva para no bloquear el toque
-- Señal: `action_pressed`
-
-### Flujo de desactivación del joystick al cambiar de vista
-- En `main.gd._on_player_entered_island()`: GPS joystick se desactiva con `set_process_unhandled_input(false)` y `set_process_input(false)`
-- En `main.gd._on_player_exited_dungeon()`: GPS joystick se reactiva
-
----
-
-## Input Map (project.godot)
-| Acción | Teclas |
-|--------|--------|
-| move_up | W, Up |
-| move_down | S, Down |
-| move_left | A, Left |
-| move_right | D, Right |
-| interact | E, Space |
-
----
-
-## Sistema de islas (coordenadas en gps_map.gd)
-
-| Nombre | Posición (x, y) |
-|--------|------------------|
-| Tu isla (home) | (640, 360) |
-| Isla Enana | (200, 150) |
-| Isla del Cocinero | (500, 350) |
-| Isla Drum Jr. | (800, 200) |
-
----
-
-## Destinos para viaje (en gps_map.gd, DESTINATIONS)
-
-| Destino | Nombre | Costo (doblones) | Posición |
-|---------|--------|-------------------|----------|
-| isla_norte | Isla Enana | 10 | (200, 150) |
-| isla_este | Isla del Cocinero | 15 | (800, 200) |
-| puerto_neutral | Puerto Loguetown | 20 | (640, 600) |
-
----
-
-## Sistemas implementados
-
-| Sistema | Descripción |
-|---------|-------------|
-| **Economía** | Doblones como moneda única. Se ganan con tesoros, se pierden en tormentas y viajes. HP del barco cuesta reparaciones |
-| **Auth** | Login anónimo con Supabase. JWT + refresh token guardados en `user://auth.cfg`. Auto-renewal si expira |
-| **Viaje** | Al salir del dungeon y elegir destino, marcador viaja automáticamente por el mapa GPS a velocidad constante |
-| **Eventos de viaje** | Al llegar: 30% tesoro (+10-50 doblones), 25% tormenta (-5-20 doblones + 5-15 daño barco), 45% nada |
-| **Salud del barco** | HP del barco (100 max). Tormentas dañan. Si llega a 0, no se puede zarpar. Reparación cuesta 5 doblones por HP |
-| **Mapa overlay** | Tecla M abre/cierra overlay. Escape también cierra. Pestaña "Isla" muestra dungeon con jugador y zona de salida. Pestaña "Océano" muestra islas conocidas con nombres |
-| **Joystick virtual** | Único en main.tscn. Flotante, aparece al tocar. Funciona en Android (touch) y PC (mouse). Se deshabilita con menús |
-| **Botón contextual** | Táctil, aparece cerca de objetos interactuables. "Entrar" en GPS, "Abordar" en dungeon |
-| **Islas desde Supabase** | Islas cargadas desde tabla islands. Isla home creada con coords GPS reales al primer inicio. player_island_knowledge controla nivel de conocimiento (1-5) |
-| **Sin movimiento libre GPS** | En vista GPS el jugador no puede moverse con joystick. Solo puede entrar al dungeon. La posición se actualiza por GPS real |
 
 ---
 
@@ -186,59 +221,38 @@ var ship_hp: int = 100
 var ship_hp_max: int = 100
 var ship_repair_cost: int = 5
 var current_island_name: String = "Tu isla"
+var home_island_id: String = ""
+var islands_cache: Array = []
 ```
 
 ---
 
-## Variables principales de SupabaseClient
-```gdscript
-var _access_token: String = ""
-var _user_id: String = ""
-var _refresh_token: String = ""
-```
-
-## Debug overlay
-- Controlado por `debug_gps: bool` en `gps_map.gd`
-- Muestra: coordenadas GPS, estado GpsService, log de GameManager
-- Para desactivar en producción: cambiar `debug_gps = true` a `false`
-- Supabase auth logs también se suprimen con el mismo toggle
+## Debug
+- `debug_gps: bool` en `gps_map.gd` — muestra coordenadas GPS, estado GpsService, log de GameManager
+- Para producción: cambiar a `false`
+- `# SupabaseClient._clear_token()` en `game_manager.gd` — descomentar solo para resetear token en desarrollo
 
 ---
 
 ## Sistema de conocimiento de islas
 
-### Filosofía
-- Vista GPS: islas como formas puras sin nombres — percepción sensorial directa
-- Mapa: conocimiento acumulado, ficha construida progresivamente
-- El conocimiento es universal (mismo para todos) pero se desbloquea por jugador
-- Zona Segura siempre visible con nombre desde el inicio
+### Niveles (1-5)
+1. Localización
+2. Nombre
+3. Rasgos físicos
+4. Rasgos humanos
+5. Economía
 
-### Niveles de conocimiento (1-5)
-1. Localización — solo verla desde el mar
-2. Nombre — visitar la isla + hablar con NPC, o conseguir mapa
-3. Rasgos físicos — explorar la isla
-4. Rasgos humanos — interactuar con habitantes
-5. Economía — hablar con NPC económico, o comerciar
-
-### Tabla islands (Supabase)
+### Tabla islands
 id, nombre, lat, lng, tipo (normal/hub/zona_segura), terreno, relieve, costa, faccion, poblacion, recursos (text[]), comercio (text[]), seed
 
-### Tabla player_island_knowledge (Supabase)
+### Tabla player_island_knowledge
 player_id, island_id, nivel (1-5)
-
-### UI del mapa
-- Sheet modal que sube desde abajo (botón Mapa en navbar)
-- Pestañas: Océano / Isla
-- Toca isla en el mapa → ficha con 5 campos, bloqueados según nivel
-- Barra de 5 puntos muestra progreso de conocimiento
-
-### Navbar inferior
-Inventario | ZARPAR | Mapa
 
 ---
 
 ## Próximo sprint
-**Sprint 26** — Por definir
+**Sprint 27** — Por definir
 
 ---
 
@@ -247,7 +261,7 @@ Inventario | ZARPAR | Mapa
 ---
 Estoy desarrollando PirateWorld, RPG pirata en Godot 4.6.1.
 Stack: GDScript + Supabase + OpenCode en VSC.
-Sprints completados: 1-25.
-Último sprint: 25 — Islas desde Supabase.
+Sprints completados: 1-26.
+Último sprint: 26 — Sistema de viaje entre islas. Menú de destinos desde Supabase. VoyageManager con timer en tiempo real. VoyageHUD con countdown. Doblones como combustible.
 El contexto completo está en PIRATEWORLD_CONTEXT.md
 ---

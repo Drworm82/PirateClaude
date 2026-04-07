@@ -15,6 +15,7 @@ var ship_hp_max: int = 100
 var ship_repair_cost: int = 5
 var current_island_name: String = "Tu isla"
 var home_island_id: String = ""
+var islands_cache: Array = []
 var _pending_gps_sync: bool = false
 var debug_log: Array[String] = []
 
@@ -49,7 +50,7 @@ func _sync_home_position() -> void:
 func initialize() -> void:
 	log_debug("init started")
 	# DEBUG: descomentar solo para resetear token
-	SupabaseClient._clear_token()
+	# SupabaseClient._clear_token()
 	SupabaseClient.sign_in_anonymous()
 	var result: bool = await SupabaseClient.auth_completed
 	log_debug("auth: " + str(result) + " id: " + SupabaseClient._user_id)
@@ -81,10 +82,13 @@ func _load_or_create_player() -> void:
 		home_lat = p.get("lat_center", 19.4326)
 		home_lng = p.get("lng_center", -99.1332)
 		ship_hp = p.get("ship_hp", 100)
+		home_island_id = p.get("home_island_id", "")
 		if _pending_gps_sync:
 			_pending_gps_sync = false
 			_sync_home_position()
 		print("Jugador cargado: ", doblones, " doblones")
+		if home_island_id == "":
+			await _find_home_island()
 	else:
 		await _create_player()
 
@@ -205,6 +209,7 @@ func load_islands() -> Array:
 	var body: String = response[3].get_string_from_utf8()
 	var data: Variant = JSON.parse_string(body)
 	if data is Array:
+		islands_cache = data
 		log_debug("islas cargadas: " + str(data.size()))
 		return data
 	log_debug("islas err: " + str(response[1]))
@@ -232,3 +237,12 @@ func unlock_island_knowledge(island_id: String, nivel: int) -> void:
 		"nivel": nivel
 	}
 	SupabaseClient.upsert("player_island_knowledge", data)
+
+func _find_home_island() -> void:
+	var http := SupabaseClient.select("islands", "tipo=eq.home&order=id&limit=1")
+	var response: Array = await http.request_completed
+	var body: String = response[3].get_string_from_utf8()
+	var data: Variant = JSON.parse_string(body)
+	if data is Array and data.size() > 0:
+		home_island_id = data[0].get("id", "")
+		log_debug("home_island_id: " + home_island_id)

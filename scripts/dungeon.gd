@@ -20,7 +20,7 @@ var island_seed: int = 0
 var island_pos: Vector2 = Vector2.ZERO
 var land_rect: Rect2
 var exit_zone_rect: Rect2
-var destination_menu: DestinationMenu = null
+var destination_menu: CanvasLayer = null
 var context_button = null
 
 func _ready() -> void:
@@ -111,12 +111,11 @@ func _show_destination_menu() -> void:
 
 	context_button.hide_action()
 
-	var menu_scene: PackedScene = preload("res://scenes/destination_menu.tscn")
+	var menu_scene: PackedScene = preload("res://scenes/destinationmenu.tscn")
 	destination_menu = menu_scene.instantiate()
-	add_child(destination_menu)
-	destination_menu.setup(GameManager.current_island_name)
-	destination_menu.destination_selected.connect(_on_destination_selected)
-	destination_menu.cancelled.connect(_on_destination_cancelled)
+	get_tree().root.add_child(destination_menu)
+	print("[DUNGEON] menu instanciado, visible: ", destination_menu.visible)
+	destination_menu.menu_closed.connect(_on_destination_menu_closed)
 
 	player.can_move = false
 	if joystick:
@@ -136,6 +135,10 @@ func _on_destination_cancelled() -> void:
 	if destination_menu:
 		destination_menu.queue_free()
 		destination_menu = null
+	player.can_move = true
+
+func _on_destination_menu_closed() -> void:
+	destination_menu = null
 	player.can_move = true
 	if joystick:
 		joystick.set_enabled(true)

@@ -7,6 +7,7 @@ var gps_map: GPSMap
 var current_dungeon: Dungeon
 var current_destination: String = ""
 var travel_result_ui: Node = null
+var sail_button: Button = null
 
 const TRAVEL_COSTS := {
 	"isla_norte": 10,
@@ -15,13 +16,20 @@ const TRAVEL_COSTS := {
 }
 
 func _ready() -> void:
+	print("[MAIN] _ready() iniciado")
 	await GameManager.initialize()
+	print("[MAIN] GameManager inicializado. player_id: ", GameManager.player_id)
 	_setup_gps_view()
+	sail_button = get_node_or_null("UI/SailButton")
+	if sail_button:
+		sail_button.pressed.connect(_on_sail_pressed)
 
 func _setup_gps_view() -> void:
+	print("[MAIN] _setup_gps_view() ejecutado")
 	var gps_scene: PackedScene = preload("res://scenes/gps_map.tscn")
 	gps_map = gps_scene.instantiate()
 	add_child(gps_map)
+	print("[MAIN] gps_map agregado a escena. visible: ", gps_map.visible)
 	gps_map.player_entered_island.connect(_on_player_entered_island)
 	current_view = View.GPS
 
@@ -124,3 +132,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		if event.pressed and event.keycode == KEY_M:
 			open_map()
+
+func _on_sail_pressed() -> void:
+	var menu: CanvasLayer = preload("res://scenes/destinationmenu.tscn").instantiate()
+	add_child(menu)

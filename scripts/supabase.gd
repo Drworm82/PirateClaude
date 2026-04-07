@@ -114,28 +114,37 @@ func _clear_token() -> void:
     _refresh_token = ""
 
 func select(table: String, filters: String = "") -> HTTPRequest:
-    var url := BASE_URL + "/rest/v1/" + table
-    if filters != "":
-        url += "?" + filters
-    var http := HTTPRequest.new()
-    add_child(http)
-    http.request(url, _get_headers(), HTTPClient.METHOD_GET)
-    return http
+	var url := BASE_URL + "/rest/v1/" + table
+	if filters != "":
+		url += "?" + filters
+	var http := HTTPRequest.new()
+	add_child(http)
+	http.request(url, _get_headers(), HTTPClient.METHOD_GET)
+	return http
 
 func insert(table: String, data: Dictionary) -> HTTPRequest:
-    var url := BASE_URL + "/rest/v1/" + table
-    var http := HTTPRequest.new()
-    add_child(http)
-    var body := JSON.stringify(data)
-    http.request(url, _get_headers(), HTTPClient.METHOD_POST, body)
+	var url := BASE_URL + "/rest/v1/" + table
+	var http := HTTPRequest.new()
+	add_child(http)
+	var body := JSON.stringify(data)
+	http.request(url, _get_headers(), HTTPClient.METHOD_POST, body)
     return http
 
 func upsert(table: String, data: Dictionary) -> HTTPRequest:
-    var url := BASE_URL + "/rest/v1/" + table
-    var headers := _get_headers()
-    headers.append("Prefer: resolution=merge-duplicates")
-    var http := HTTPRequest.new()
-    add_child(http)
-    var body := JSON.stringify(data)
-    http.request(url, headers, HTTPClient.METHOD_POST, body)
-    return http
+	var url := BASE_URL + "/rest/v1/" + table
+	var headers := _get_headers()
+	headers.append("Prefer: resolution=merge-duplicates")
+	var http := HTTPRequest.new()
+	add_child(http)
+	var body := JSON.stringify(data)
+	http.request(url, headers, HTTPClient.METHOD_POST, body)
+	return http
+
+func supabase_rpc(function_name: String, args: Dictionary) -> HTTPRequest:
+	var url := BASE_URL + "/rest/v1/rpc/" + function_name
+	var http := HTTPRequest.new()
+	add_child(http)
+	var body := JSON.stringify(args)
+	var err: int = http.request(url, _get_headers(), HTTPClient.METHOD_POST, body)
+	print("[RPC] ", function_name, " url: ", url, " err: ", err)
+	return http
