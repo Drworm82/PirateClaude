@@ -52,3 +52,11 @@ func debug_log(msg: String) -> void:
 	var overlay = Engine.get_main_loop().root.get_node_or_null("Main/DebugOverlay")
 	if overlay:
 		overlay.log(msg)
+
+func get_island_coords(island_id: String) -> Dictionary:
+	for island in GameManager.islands_cache:
+		if str(island.get("id", "")) == island_id:
+			return {"lat": float(island.get("lat", 0.0)), "lng": float(island.get("lng", 0.0))}
+	if island_id == GameManager.home_island_id:
+		return {"lat": GameManager.home_lat, "lng": GameManager.home_lng}
+	return {"lat": 0.0, "lng": 0.0}

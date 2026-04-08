@@ -5,6 +5,7 @@ extends CanvasLayer
 @onready var ad_button: Label = $HUD/AdButton
 
 func _ready() -> void:
+	GameState.debug_log("VoyageHUD ready, active: " + str(not VoyageManager.active_voyage.is_empty()))
 	visible = false
 	VoyageManager.voyage_updated.connect(_on_voyage_updated)
 	VoyageManager.voyage_arrived.connect(_on_arrived)
@@ -12,7 +13,8 @@ func _ready() -> void:
 	if not VoyageManager.active_voyage.is_empty():
 		visible = true
 
-func _on_voyage_updated(seconds_remaining: int, doblones_remaining: int) -> void:
+func _on_voyage_updated(seconds_remaining: int, doblones_remaining: int, progress: float) -> void:
+	GameState.debug_log("HUD update: " + str(seconds_remaining) + "s")
 	visible = true
 	var minutes: int = seconds_remaining / 60
 	var seconds: int = seconds_remaining % 60

@@ -18,7 +18,7 @@ const TRAVEL_COSTS := {
 func _ready() -> void:
 	print("[MAIN] _ready() iniciado")
 	await GameManager.initialize()
-	print("[MAIN] GameManager inicializado. player_id: ", GameManager.player_id)
+	await VoyageManager.check_active_voyage()
 	_setup_gps_view()
 	sail_button = get_node_or_null("UI/SailButton")
 	if sail_button:

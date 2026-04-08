@@ -1,13 +1,11 @@
 extends CanvasLayer
 
-var _label: Label
-
-func _ready() -> void:
-	_label = get_node("DebugLabel")
-	_label.text = ""
+@onready var _label: Label = $DebugLabel
 
 func log(msg: String) -> void:
 	print(msg)
+	if not is_instance_valid(_label):
+		return
 	var current: String = _label.text
 	current += "\n" + msg
 	var lines: PackedStringArray = current.split("\n")
@@ -22,4 +20,5 @@ func log(msg: String) -> void:
 		_label.text = current
 
 func clear() -> void:
-	_label.text = ""
+	if is_instance_valid(_label):
+		_label.text = ""

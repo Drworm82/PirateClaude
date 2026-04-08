@@ -25,6 +25,10 @@ var context_button = null
 var _exit_enabled := true
 
 func _ready() -> void:
+	joystick = get_tree().get_first_node_in_group("joystick")
+	if joystick:
+		joystick.set_enabled(true)
+	
 	_exit_enabled = false
 	await get_tree().create_timer(1.0).timeout
 	_exit_enabled = true
@@ -51,8 +55,6 @@ func _ready() -> void:
 	$TileMap.clear()
 	$Boat.player_boarded.connect(_on_player_boarded)
 	$Boat.set_player_ref(player)
-
-	joystick = get_tree().get_first_node_in_group("joystick")
 
 	var btn_scene: PackedScene = preload("res://scenes/context_action_button.tscn")
 	context_button = btn_scene.instantiate()

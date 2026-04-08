@@ -43,6 +43,7 @@ func _ready() -> void:
 	_map_center = get_viewport_rect().size / 2.0
 	GameManager.home_position_ready.connect(_on_home_ready)
 	GameManager.player_position_changed.connect(_on_player_moved)
+	VoyageManager.voyage_updated.connect(_on_voyage_updated)
 	# Esperar a que GPS y auth estén listos
 	await get_tree().create_timer(3.0).timeout
 	await _load_islands_from_supabase()
@@ -308,3 +309,26 @@ func _center_on_home_island() -> void:
 func _exit_tree() -> void:
 	if joystick:
 		joystick.set_enabled(false)
+
+
+func _on_voyage_updated(seconds_remaining: int, doblones_remaining: int, progress: float) -> void:
+	_update_voyage_hud(seconds_remaining, doblones_remaining)
+	
+	if not VoyageManager.active_voyage.is_empty():
+		var origin: Dictionary = GameState.get_island_coords(
+			VoyageManager.active_voyage.get("origin_island_id", ""))
+		var dest: Dictionary = GameState.get_island_coords(
+			VoyageManager.active_voyage.get("destination_island_id", ""))
+		GameState.debug_log("origin: " + str(origin) + " dest: " + str(dest))
+		if origin["lat"] != 0.0 and dest["lat"] != 0.0:
+			_player_lat = lerpf(origin["lat"], dest["lat"], progress)
+			_player_lng = lerpf(origin["lng"], dest["lng"], progress)
+			GameState.debug_log("progress: " + str(progress) + " lat: " + str(_player_lat))
+			_place_islands_relative()
+			queue_redraw()
+
+
+func _update_voyage_hud(seconds_remaining: int, doblones_remaining: int) -> void:
+	var hud = get_node_or_null("VoyageHUD")
+	if hud:
+		hud.visible = true

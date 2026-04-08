@@ -1,15 +1,16 @@
 extends Node
 
-const SHIP_SPEED_KMH: float = 500.0
+const SHIP_SPEED_KMH: float = 5.0
 const SHIP_RANGE_KM: float = 5.0
 const DOBLONES_PER_KM: int = 2
 
 var active_voyage: Dictionary = {}
 var _timer: Timer
 
-signal voyage_updated(seconds_remaining: int, doblones_remaining: int)
+signal voyage_updated(seconds_remaining: int, doblones_remaining: int, progress: float)
 signal voyage_arrived(destination_id: String)
 signal voyage_drifting()
+signal check_completed
 
 func _ready() -> void:
 	_timer = Timer.new()
@@ -17,8 +18,6 @@ func _ready() -> void:
 	_timer.one_shot = false
 	_timer.timeout.connect(_tick)
 	add_child(_timer)
-	await get_tree().process_frame
-	check_active_voyage()
 
 func _process(_delta: float) -> void:
 	if active_voyage.is_empty():
@@ -50,7 +49,11 @@ func _tick() -> void:
 	if seconds_remaining <= 0:
 		_set_arrived()
 		return
-	voyage_updated.emit(seconds_remaining, doblones_remaining)
+	var total_seconds: int = int(active_voyage.get("arrival_time", 0.0) - active_voyage.get("departure_time", 0.0))
+	var progress: float = 0.0
+	if total_seconds > 0:
+		progress = clampf(1.0 - (float(seconds_remaining) / float(total_seconds)), 0.0, 1.0)
+	voyage_updated.emit(seconds_remaining, doblones_remaining, progress)
 
 func start_voyage(destination_island_id: String) -> void:
 	var distance_km: float = GameState.get_distance_to(destination_island_id)
@@ -96,6 +99,7 @@ func start_voyage(destination_island_id: String) -> void:
 
 func check_active_voyage() -> void:
 	if GameState.get_player_id() == "":
+		check_completed.emit()
 		return
 	var http: HTTPRequest = SupabaseClient.select(
 		"voyages",
@@ -111,11 +115,18 @@ func check_active_voyage() -> void:
 		var arr_str: String = str(v.get("arrival_time", "")).replace("Z", "")
 		active_voyage = {
 			"id": str(v.get("id", "")),
+			"origin_island_id": str(v.get("origin_island_id", "")),
+			"destination_island_id": str(v.get("destination_island_id", "")),
 			"departure_time": float(Time.get_unix_time_from_datetime_string(dep_str)),
 			"arrival_time": float(Time.get_unix_time_from_datetime_string(arr_str)),
 			"doblones_at_departure": int(v.get("doblones_at_departure", 0)),
-			"destination_island_id": str(v.get("destination_island_id", ""))
+			"doblones_per_km": int(v.get("doblones_per_km", DOBLONES_PER_KM)),
+			"distance_km": float(v.get("distance_km", 0.0)),
+			"status": str(v.get("status", "sailing"))
 		}
+		_timer.start(1.0)
+		_tick()
+	check_completed.emit()
 
 func _set_arrived() -> void:
 	_timer.stop()
