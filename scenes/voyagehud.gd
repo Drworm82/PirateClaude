@@ -19,7 +19,7 @@ func _on_voyage_updated(seconds_remaining: int, doblones_remaining: int) -> void
 	timer_label.text = "Llegada en: %02d:%02d" % [minutes, seconds]
 	doblones_label.text = "Doblones a bordo: %d" % doblones_remaining
 
-func _on_arrived() -> void:
+func _on_arrived(destination_id: String) -> void:
 	visible = false
 
 func _on_drifting() -> void:

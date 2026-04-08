@@ -17,16 +17,18 @@ format = 2
 layer_0/tile_data = PackedInt32Array(1179663, 1835008, 48, 1179672, 3604480, 46)
 
 [node name="Player" parent="." unique_id=294458695 instance=ExtResource("2_player")]
-position = Vector2(640, 640)
+position = Vector2(360, 640)
 
 [node name="Camera2D" type="Camera2D" parent="Player" unique_id=2086984482]
 
 [node name="ExitZone" type="Area2D" parent="." unique_id=330865206]
-position = Vector2(640, 940)
+position = Vector2(363, 1203)
 collision_layer = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ExitZone" unique_id=1835605266]
+visibility_layer = 17
 shape = SubResource("RectangleShape2D_1")
+debug_color = Color(0.73341113, 0.4715413, 7.70092e-07, 0.41960785)
 
 [node name="Boat" parent="." unique_id=1944592298 instance=ExtResource("3_boat")]
-position = Vector2(640, 1100)
+position = Vector2(361, 110)

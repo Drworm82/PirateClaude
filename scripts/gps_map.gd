@@ -254,6 +254,8 @@ func _on_player_moved(lat: float, lng: float) -> void:
 
 
 func _load_islands_from_supabase() -> void:
+	SupabaseClient.refresh_token()
+	await get_tree().create_timer(0.5).timeout
 	var raw_islands: Array = await GameManager.load_islands()
 	var raw_knowledge: Array = await GameManager.load_island_knowledge()
 	

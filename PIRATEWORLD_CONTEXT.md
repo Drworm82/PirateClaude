@@ -113,6 +113,7 @@
 - Sprint 24: Diseño de sistema de conocimiento de islas (5 niveles). Tablas islands y player_island_knowledge creadas
 - Sprint 25: Islas cargadas desde Supabase. Isla home creada con coords GPS reales. Jugador centrado sobre isla home. Sin movimiento libre en vista GPS
 - Sprint 26: Sistema de viaje entre islas. Menú de destinos desde Supabase (get_reachable_islands RPC). VoyageManager con timer en tiempo real (timestamps en Supabase, persiste si se cierra la app). VoyageHUD con countdown y doblones a bordo. Doblones como combustible consumido gradualmente. Estado a la deriva si se agotan. GameState como puente a GameManager. Detección manual de touch en menú de destinos
+- Sprint 27: Menú de llegada a isla destino (ArrivalMenu, CanvasLayer Layer 15). 3 opciones: bajar a isla (→ dungeon.tscn via add_child), quedarse a bordo, zarpar (→ DestinationMenu). Doblones se transfieren al banco solo al llegar a isla base. voyage_arrived emite destination_id. VoyageManager usa unix timestamps internamente. Fix JWT refresh awaitable. Fix spawn del jugador fuera de exit zone. Fix dungeon anterior eliminado al bajar a nueva isla. DebugOverlay global agregado en main.tscn (Layer 99).
 
 ---
 
@@ -213,6 +214,7 @@ JavaClassWrapper → ActivityThread → currentApplication() → getApplicationC
 ```gdscript
 var player_id: String = ""
 var doblones: int = 100
+var doblones_onboard: int = 0
 var prestigio: int = 0
 var home_lat: float = 19.4326
 var home_lng: float = -99.1332
@@ -252,7 +254,7 @@ player_id, island_id, nivel (1-5)
 ---
 
 ## Próximo sprint
-**Sprint 27** — Por definir
+**Sprint 28** — Por definir
 
 ---
 
@@ -261,7 +263,7 @@ player_id, island_id, nivel (1-5)
 ---
 Estoy desarrollando PirateWorld, RPG pirata en Godot 4.6.1.
 Stack: GDScript + Supabase + OpenCode en VSC.
-Sprints completados: 1-26.
-Último sprint: 26 — Sistema de viaje entre islas. Menú de destinos desde Supabase. VoyageManager con timer en tiempo real. VoyageHUD con countdown. Doblones como combustible.
+Sprints completados: 1-27.
+Último sprint: 27 — Menú de llegada a isla destino. ArrivalMenu con 3 opciones. Doblones como combustible. Fix JWT refresh. DebugOverlay global.
 El contexto completo está en PIRATEWORLD_CONTEXT.md
 ---

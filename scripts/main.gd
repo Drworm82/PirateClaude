@@ -23,6 +23,7 @@ func _ready() -> void:
 	sail_button = get_node_or_null("UI/SailButton")
 	if sail_button:
 		sail_button.pressed.connect(_on_sail_pressed)
+	VoyageManager.voyage_arrived.connect(_on_voyage_arrived)
 
 func _setup_gps_view() -> void:
 	print("[MAIN] _setup_gps_view() ejecutado")
@@ -134,5 +135,41 @@ func _input(event: InputEvent) -> void:
 			open_map()
 
 func _on_sail_pressed() -> void:
+	_open_destination_menu()
+
+func _open_destination_menu() -> void:
 	var menu: CanvasLayer = preload("res://scenes/destinationmenu.tscn").instantiate()
 	add_child(menu)
+
+func _on_voyage_arrived(destination_id: String) -> void:
+	var menu: CanvasLayer = preload("res://scenes/arrival_menu.tscn").instantiate()
+	var island_name: String = GameState.get_island_name(destination_id)
+	menu.set_island_name(island_name)
+	add_child(menu)
+	menu.go_ashore.connect(_on_arrival_go_ashore)
+	menu.stay_onboard.connect(_on_arrival_stay)
+	menu.set_sail.connect(_on_arrival_set_sail)
+
+func _on_arrival_stay() -> void:
+	pass
+
+func _on_arrival_go_ashore() -> void:
+	if is_instance_valid(current_dungeon):
+		current_dungeon.queue_free()
+		current_dungeon = null
+	
+	var island_pos := Vector2(GameManager.home_lat, GameManager.home_lng)
+	var p_seed := int(island_pos.x) * 73856093 ^ int(island_pos.y) * 19349663
+	
+	var dungeon_scene: PackedScene = preload("res://scenes/dungeon.tscn")
+	current_dungeon = dungeon_scene.instantiate()
+	add_child(current_dungeon)
+	current_dungeon.setup(p_seed, island_pos)
+	current_dungeon.player_exited_dungeon.connect(_on_player_exited_dungeon)
+	current_dungeon.destination_chosen.connect(_on_destination_chosen)
+	current_view = View.DUNGEON
+	
+	gps_map.visible = false
+
+func _on_arrival_set_sail() -> void:
+	_open_destination_menu()

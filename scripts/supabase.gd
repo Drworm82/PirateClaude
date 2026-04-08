@@ -30,9 +30,9 @@ func sign_in_anonymous() -> void:
             emit_signal("auth_completed", true)
             return
         elif _refresh_token != "":
-            await _do_refresh()
+            _do_refresh()
             return
-    await _do_signup()
+    _do_signup()
 
 func _do_signup() -> void:
     var url := BASE_URL + "/auth/v1/signup"
@@ -57,6 +57,12 @@ func _do_refresh() -> void:
         "Content-Type: application/json"
     ]
     http.request(url, headers, HTTPClient.METHOD_POST, body)
+
+func refresh_token() -> void:
+	if _refresh_token == "":
+		return
+	_do_refresh()
+	await auth_completed
 
 func _on_auth_completed(_result: int, response_code: int,
                          _headers: PackedStringArray,
@@ -84,7 +90,12 @@ func _on_auth_completed(_result: int, response_code: int,
         GameManager.log_debug("body: " + body.get_string_from_utf8().left(80))
     _clear_token()
     http_node.queue_free()
-    emit_signal("auth_completed", false)
+    # Si el refresh falló, intentar sign_in de nuevo
+    if response_code >= 400 and _refresh_token != "":
+        _refresh_token = ""
+        await sign_in_anonymous()
+    else:
+        emit_signal("auth_completed", false)
 
 func _save_token() -> void:
     var config := ConfigFile.new()
@@ -105,6 +116,11 @@ func _load_token() -> Dictionary:
                 "auth", "refresh_token", "")
         }
     return {}
+
+func has_saved_token() -> bool:
+    var config := ConfigFile.new()
+    var err := config.load("user://auth.cfg")
+    return err == OK and config.has_section_key("auth", "refresh_token")
 
 func _clear_token() -> void:
     var config := ConfigFile.new()

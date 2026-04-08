@@ -1,34 +1,48 @@
 extends Node
 
-const SHIP_SPEED_KMH: float = 5.0
+const SHIP_SPEED_KMH: float = 500.0
 const SHIP_RANGE_KM: float = 5.0
 const DOBLONES_PER_KM: int = 2
 
 var active_voyage: Dictionary = {}
-var _timer: float = 0.0
+var _timer: Timer
 
 signal voyage_updated(seconds_remaining: int, doblones_remaining: int)
-signal voyage_arrived()
+signal voyage_arrived(destination_id: String)
 signal voyage_drifting()
 
 func _ready() -> void:
+	_timer = Timer.new()
+	_timer.wait_time = 1.0
+	_timer.one_shot = false
+	_timer.timeout.connect(_tick)
+	add_child(_timer)
 	await get_tree().process_frame
 	check_active_voyage()
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if active_voyage.is_empty():
 		return
-	_timer += delta
-	if _timer >= 1.0:
-		_timer = 0.0
-		_tick()
+	if not _timer.is_inside_tree() or _timer.is_stopped():
+		_timer.start()
+
+func _get_departure_unix() -> float:
+	return float(active_voyage.get("departure_time", 0.0))
+
+func _get_seconds_remaining() -> int:
+	var arrival: float = float(active_voyage.get("arrival_time", 0.0))
+	var now: int = int(Time.get_unix_time_from_system())
+	return maxi(0, int(arrival) - now)
 
 func _tick() -> void:
+	if active_voyage.is_empty():
+		return
+	var seconds_remaining: int = _get_seconds_remaining()
 	var now: float = Time.get_unix_time_from_system()
-	var seconds_remaining: int = int(active_voyage.arrival_unix - now)
-	var elapsed_minutes: float = (now - active_voyage.departure_unix) / 60.0
+	var elapsed_minutes: float = (now - _get_departure_unix()) / 60.0
 	var km_traveled: float = (SHIP_SPEED_KMH / 60.0) * elapsed_minutes
-	var doblones_remaining: int = active_voyage.doblones_at_departure - int(km_traveled * DOBLONES_PER_KM)
+	var doblones_at_departure: int = active_voyage.get("doblones_at_departure", 0)
+	var doblones_remaining: int = doblones_at_departure - int(km_traveled * DOBLONES_PER_KM)
 
 	if doblones_remaining <= 0:
 		_set_drifting()
@@ -43,6 +57,10 @@ func start_voyage(destination_island_id: String) -> void:
 	var duration_seconds: int = int((distance_km / SHIP_SPEED_KMH) * 3600.0)
 	var now: float = Time.get_unix_time_from_system()
 	var doblones: int = GameState.get_doblones_onboard()
+	if doblones == 0:
+		doblones = GameManager.doblones
+		GameManager.doblones_onboard = doblones
+		GameManager.doblones = 0
 
 	var payload: Dictionary = {
 		"player_id": GameState.get_player_id(),
@@ -65,11 +83,16 @@ func start_voyage(destination_island_id: String) -> void:
 	if data is Array and data.size() > 0:
 		active_voyage = {
 			"id": str(data[0].get("id", "")),
-			"departure_unix": now,
-			"arrival_unix": now + duration_seconds,
+			"origin_island_id": GameState.get_current_island_id(),
+			"destination_island_id": destination_island_id,
+			"departure_time": now,
+			"arrival_time": now + duration_seconds,
 			"doblones_at_departure": doblones,
-			"destination_island_id": destination_island_id
+			"doblones_per_km": DOBLONES_PER_KM,
+			"distance_km": distance_km,
+			"status": "sailing"
 		}
+		_timer.start(1.0)
 
 func check_active_voyage() -> void:
 	if GameState.get_player_id() == "":
@@ -84,23 +107,34 @@ func check_active_voyage() -> void:
 
 	if data is Array and data.size() > 0:
 		var v: Dictionary = data[0]
+		var dep_str: String = str(v.get("departure_time", "")).replace("Z", "")
+		var arr_str: String = str(v.get("arrival_time", "")).replace("Z", "")
 		active_voyage = {
 			"id": str(v.get("id", "")),
-			"departure_unix": _iso_to_unix(str(v.get("departure_time", ""))),
-			"arrival_unix": _iso_to_unix(str(v.get("arrival_time", ""))),
+			"departure_time": float(Time.get_unix_time_from_datetime_string(dep_str)),
+			"arrival_time": float(Time.get_unix_time_from_datetime_string(arr_str)),
 			"doblones_at_departure": int(v.get("doblones_at_departure", 0)),
 			"destination_island_id": str(v.get("destination_island_id", ""))
 		}
 
 func _set_arrived() -> void:
+	_timer.stop()
+	var destination_id: String = active_voyage.destination_island_id
+
+	if destination_id == GameState.get_current_island_id():
+		var doblones_onboard: int = GameState.get_doblones_onboard()
+		GameManager.doblones += doblones_onboard
+		GameState.set_doblones_onboard(0)
+
 	var http: HTTPRequest = SupabaseClient.upsert("voyages", {
 		"id": active_voyage.id,
 		"status": "arrived"
 	})
 	await http.request_completed
-	GameState.set_current_island_id(active_voyage.destination_island_id)
+
+	GameState.set_current_island_id(destination_id)
 	active_voyage = {}
-	voyage_arrived.emit()
+	voyage_arrived.emit(destination_id)
 
 func _set_drifting() -> void:
 	var http: HTTPRequest = SupabaseClient.upsert("voyages", {

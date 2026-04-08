@@ -16,6 +16,7 @@ var ship_repair_cost: int = 5
 var current_island_name: String = "Tu isla"
 var home_island_id: String = ""
 var islands_cache: Array = []
+var doblones_onboard: int = 0
 var _pending_gps_sync: bool = false
 var debug_log: Array[String] = []
 
@@ -51,6 +52,11 @@ func initialize() -> void:
 	log_debug("init started")
 	# DEBUG: descomentar solo para resetear token
 	# SupabaseClient._clear_token()
+	# Si ya tenemos token guardado, refrescarlo antes de usarlo
+	if SupabaseClient.has_saved_token():
+		await SupabaseClient.refresh_token()
+		await get_tree().create_timer(0.5).timeout
+	
 	SupabaseClient.sign_in_anonymous()
 	var result: bool = await SupabaseClient.auth_completed
 	log_debug("auth: " + str(result) + " id: " + SupabaseClient._user_id)
@@ -77,7 +83,9 @@ func _load_or_create_player() -> void:
 
 	if data is Array and data.size() > 0:
 		var p: Dictionary = data[0]
-		doblones = p.get("doblones", 100)
+		doblones = int(p.get("doblones", 100))
+		if doblones == 0:
+			doblones = 100
 		prestigio = p.get("prestigio", 0)
 		home_lat = p.get("lat_center", 19.4326)
 		home_lng = p.get("lng_center", -99.1332)
@@ -246,3 +254,9 @@ func _find_home_island() -> void:
 	if data is Array and data.size() > 0:
 		home_island_id = data[0].get("id", "")
 		log_debug("home_island_id: " + home_island_id)
+
+func get_doblones_onboard() -> int:
+	return doblones_onboard
+
+func set_doblones_onboard(amount: int) -> void:
+	doblones_onboard = amount

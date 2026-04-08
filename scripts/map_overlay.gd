@@ -90,10 +90,10 @@ func _draw_global_map(canvas: Control, size: Vector2) -> void:
         canvas.draw_circle(Vector2(screen_x, screen_y), 
                            radius, color)
         
-        var name: String = island.get("name", "Isla")
+        var island_name: String = island.get("name", "Isla")
         canvas.draw_string(
             ThemeDB.fallback_font,
             Vector2(screen_x - 20, screen_y - 22),
-            name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11,
+            island_name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11,
             Color.WHITE
         )

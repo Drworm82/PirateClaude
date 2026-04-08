@@ -22,8 +22,12 @@ var land_rect: Rect2
 var exit_zone_rect: Rect2
 var destination_menu: CanvasLayer = null
 var context_button = null
+var _exit_enabled := true
 
 func _ready() -> void:
+	_exit_enabled = false
+	await get_tree().create_timer(1.0).timeout
+	_exit_enabled = true
 	land_rect = Rect2(
 		(DUNGEON_WIDTH - ISLAND_SIZE_TILES) / 2.0 * TILE_SIZE,
 		(DUNGEON_HEIGHT - ISLAND_SIZE_TILES) / 2.0 * TILE_SIZE,
@@ -61,6 +65,8 @@ func _ready() -> void:
 
 func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(player):
+		return
+	if not _exit_enabled:
 		return
 
 	var exit_center := Vector2(
@@ -114,7 +120,6 @@ func _show_destination_menu() -> void:
 	var menu_scene: PackedScene = preload("res://scenes/destinationmenu.tscn")
 	destination_menu = menu_scene.instantiate()
 	get_tree().root.add_child(destination_menu)
-	print("[DUNGEON] menu instanciado, visible: ", destination_menu.visible)
 	destination_menu.menu_closed.connect(_on_destination_menu_closed)
 
 	player.can_move = false
