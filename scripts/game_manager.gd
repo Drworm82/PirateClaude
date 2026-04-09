@@ -36,7 +36,6 @@ func _on_gps_location(lat: float, lng: float) -> void:
 
 
 func _on_gps_error(reason: String) -> void:
-	print("GPS Error: ", reason)
 	emit_signal("home_position_ready", home_lat, home_lng)
 
 
@@ -50,27 +49,11 @@ func _sync_home_position() -> void:
 
 func initialize() -> void:
 	log_debug("init started")
-	# DEBUG: descomentar solo para resetear token
-	# SupabaseClient._clear_token()
-	# Si ya tenemos token guardado, refrescarlo antes de usarlo
-	if SupabaseClient.has_saved_token():
-		await SupabaseClient.refresh_token()
-		await get_tree().create_timer(0.5).timeout
-	
-	SupabaseClient.sign_in_anonymous()
-	var result: bool = await SupabaseClient.auth_completed
-	log_debug("auth: " + str(result) + " id: " + SupabaseClient._user_id)
-	if result and SupabaseClient._user_id != "":
-		player_id = SupabaseClient._user_id
-		is_authenticated = true
-		log_debug("authenticated")
-		await _load_or_create_player()
-		log_debug("player loaded")
-		if _pending_gps_sync:
-			_pending_gps_sync = false
-			_sync_home_position()
-	else:
-		log_debug("auth failed")
+	await SupabaseClient.sign_in_anonymous()
+	await SupabaseClient.auth_completed
+	player_id = SupabaseClient._user_id
+	GameState.debug_log("player_id set: " + player_id)
+	await _load_or_create_player()
 
 func _load_or_create_player() -> void:
 	var http := SupabaseClient.select(
@@ -94,7 +77,6 @@ func _load_or_create_player() -> void:
 		if _pending_gps_sync:
 			_pending_gps_sync = false
 			_sync_home_position()
-		print("Jugador cargado: ", doblones, " doblones")
 		if home_island_id == "":
 			await _find_home_island()
 	else:
@@ -192,7 +174,6 @@ func save_player() -> void:
 		"ultima_conexion": Time.get_datetime_string_from_system()
 	})
 	var response: Array = await http.request_completed
-	print("Guardado. Response: ", response[1])
 
 func repair_ship(amount: int) -> void:
 	var cost: int = amount * ship_repair_cost

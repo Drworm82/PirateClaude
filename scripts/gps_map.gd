@@ -29,18 +29,21 @@ var islands: Array = []
 var island_knowledge: Dictionary = {}
 var nearby_island: Dictionary = {}
 var initialized := false
+var _map_initialized := false
 var traveling: bool = false
 var travel_target: Vector2 = Vector2.ZERO
 var travel_origin: Vector2 = Vector2.ZERO
 var travel_destination_name: String = ""
 var travel_total_distance: float = 0.0
 var joystick = null
-var context_button = null
 
 
 func _ready() -> void:
 	initialized = true
+	await get_tree().process_frame
 	_map_center = get_viewport_rect().size / 2.0
+	player_screen_pos = _map_center
+	queue_redraw()
 	GameManager.home_position_ready.connect(_on_home_ready)
 	GameManager.player_position_changed.connect(_on_player_moved)
 	VoyageManager.voyage_updated.connect(_on_voyage_updated)
@@ -48,12 +51,7 @@ func _ready() -> void:
 	await get_tree().create_timer(3.0).timeout
 	await _load_islands_from_supabase()
 
-	player_screen_pos = _map_center
-	queue_redraw()
 	joystick = get_tree().get_first_node_in_group("joystick")
-	context_button = get_node_or_null("ContextActionButton")
-	if context_button:
-		context_button.action_pressed.connect(_on_context_pressed)
 	if joystick:
 		joystick.set_enabled(false)
 
@@ -96,21 +94,27 @@ func _world_to_screen(lat: float, lng: float) -> Vector2:
 
 
 func _physics_process(delta: float) -> void:
+	if not _map_initialized:
+		var size = get_viewport_rect().size
+		if size.x > 0 and size.y > 0:
+			_map_center = size / 2.0
+			player_screen_pos = _map_center
+			_map_initialized = true
+			_place_islands_relative()
+			queue_redraw()
+	var main = get_tree().get_first_node_in_group("main")
 	if not traveling:
 		nearby_island = {}
 		for island in islands:
 			if player_screen_pos.distance_to(island.pos) < 80.0:
 				nearby_island = island
 				break
-
-		if context_button != null:
-			if not nearby_island.is_empty():
-				context_button.show_action("Entrar")
-			else:
-				context_button.hide_action()
+		if not nearby_island.is_empty():
+			main.update_action_state(1)
+		else:
+			main.update_action_state(2)
 	else:
-		if context_button != null:
-			context_button.hide_action()
+		main.update_action_state(3)
 		var dir := (travel_target - player_screen_pos).normalized()
 		var dist: float = player_screen_pos.distance_to(travel_target)
 		if dist < 5.0:
@@ -134,11 +138,9 @@ func start_travel(destination: String) -> void:
 		traveling = true
 
 
-func _input(event: InputEvent) -> void:
-	if event is InputEventKey:
-		if event.pressed and event.keycode == KEY_E:
-			if not nearby_island.is_empty():
-				emit_signal("player_entered_island", nearby_island.pos)
+func _on_enter_island() -> void:
+	if not nearby_island.is_empty():
+		player_entered_island.emit(nearby_island.get("pos", Vector2.ZERO))
 
 
 func _draw() -> void:
@@ -239,11 +241,6 @@ func update_player_position(_gps_lat: float, _gps_lng: float) -> void:
 	queue_redraw()
 
 
-func _on_context_pressed() -> void:
-	if not nearby_island.is_empty():
-		emit_signal("player_entered_island", nearby_island.pos)
-
-
 func _on_player_moved(lat: float, lng: float) -> void:
 	if traveling:
 		return
@@ -319,11 +316,9 @@ func _on_voyage_updated(seconds_remaining: int, doblones_remaining: int, progres
 			VoyageManager.active_voyage.get("origin_island_id", ""))
 		var dest: Dictionary = GameState.get_island_coords(
 			VoyageManager.active_voyage.get("destination_island_id", ""))
-		GameState.debug_log("origin: " + str(origin) + " dest: " + str(dest))
 		if origin["lat"] != 0.0 and dest["lat"] != 0.0:
 			_player_lat = lerpf(origin["lat"], dest["lat"], progress)
 			_player_lng = lerpf(origin["lng"], dest["lng"], progress)
-			GameState.debug_log("progress: " + str(progress) + " lat: " + str(_player_lat))
 			_place_islands_relative()
 			queue_redraw()
 

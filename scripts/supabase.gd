@@ -19,20 +19,15 @@ func _get_headers() -> Array:
     ]
 
 func sign_in_anonymous() -> void:
-    var saved: Dictionary = _load_token()
-    if not saved.is_empty():
-        _access_token = saved.get("access_token", "")
-        _user_id = saved.get("user_id", "")
-        _refresh_token = saved.get("refresh_token", "")
-        if _access_token != "" and _user_id != "":
-            print("Token cargado: ", _user_id)
-            await get_tree().process_frame
-            emit_signal("auth_completed", true)
-            return
-        elif _refresh_token != "":
-            _do_refresh()
-            return
-    _do_signup()
+	var saved: Dictionary = _load_token()
+	if not saved.is_empty():
+		_access_token = saved.get("access_token", "")
+		_user_id = saved.get("user_id", "")
+		_refresh_token = saved.get("refresh_token", "")
+		if _refresh_token != "":
+			_do_refresh()
+			return
+	_do_signup()
 
 func _do_signup() -> void:
     var url := BASE_URL + "/auth/v1/signup"

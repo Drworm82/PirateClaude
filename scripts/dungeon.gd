@@ -21,7 +21,6 @@ var island_pos: Vector2 = Vector2.ZERO
 var land_rect: Rect2
 var exit_zone_rect: Rect2
 var destination_menu: CanvasLayer = null
-var context_button = null
 var _exit_enabled := true
 
 func _ready() -> void:
@@ -56,12 +55,6 @@ func _ready() -> void:
 	$Boat.player_boarded.connect(_on_player_boarded)
 	$Boat.set_player_ref(player)
 
-	var btn_scene: PackedScene = preload("res://scenes/context_action_button.tscn")
-	context_button = btn_scene.instantiate()
-	add_child(context_button)
-	context_button.action_pressed.connect(_on_context_pressed)
-	context_button.process_mode = Node.PROCESS_MODE_DISABLED
-
 	if joystick:
 		joystick.set_enabled(true)
 
@@ -80,14 +73,15 @@ func _physics_process(_delta: float) -> void:
 		_exit_dungeon()
 		return
 
-	if is_instance_valid($Boat) and context_button != null:
+	if is_instance_valid($Boat):
 		var dist: float = player.global_position.distance_to($Boat.global_position)
-		if dist < 80.0:
-			context_button.process_mode = Node.PROCESS_MODE_ALWAYS
-			context_button.show_action("Abordar")
+		var main_node = get_tree().get_first_node_in_group("main")
+		if not VoyageManager.active_voyage.is_empty():
+			main_node.update_action_state(0)
+		elif dist < 80.0:
+			main_node.update_action_state(4)
 		else:
-			context_button.process_mode = Node.PROCESS_MODE_DISABLED
-			context_button.hide_action()
+			main_node.update_action_state(0)
 
 func _draw() -> void:
 	var dungeon_rect := Rect2(0, 0, DUNGEON_WIDTH * TILE_SIZE, DUNGEON_HEIGHT * TILE_SIZE)
@@ -110,14 +104,12 @@ func _center_camera() -> void:
 func _on_player_boarded(_destination: String) -> void:
 	_show_destination_menu()
 
-func _on_context_pressed() -> void:
-	_show_destination_menu()
+func _on_board_pressed() -> void:
+	_on_player_boarded("")
 
 func _show_destination_menu() -> void:
 	if GameManager.ship_hp <= 0:
 		return
-
-	context_button.hide_action()
 
 	var menu_scene: PackedScene = preload("res://scenes/destinationmenu.tscn")
 	destination_menu = menu_scene.instantiate()

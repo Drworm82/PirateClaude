@@ -7,7 +7,7 @@ var gps_map: GPSMap
 var current_dungeon: Dungeon
 var current_destination: String = ""
 var travel_result_ui: Node = null
-var sail_button: Button = null
+var main_hud: CanvasLayer = null
 
 const TRAVEL_COSTS := {
 	"isla_norte": 10,
@@ -16,23 +16,25 @@ const TRAVEL_COSTS := {
 }
 
 func _ready() -> void:
-	print("[MAIN] _ready() iniciado")
+	add_to_group("main")
+
 	await GameManager.initialize()
 	await VoyageManager.check_active_voyage()
+	main_hud = $MainHud
+	main_hud.action_pressed.connect(_on_action_pressed)
+	main_hud.map_pressed.connect(_on_map_pressed)
+	main_hud.menu_pressed.connect(_on_menu_pressed)
 	_setup_gps_view()
-	sail_button = get_node_or_null("UI/SailButton")
-	if sail_button:
-		sail_button.pressed.connect(_on_sail_pressed)
 	VoyageManager.voyage_arrived.connect(_on_voyage_arrived)
 
 func _setup_gps_view() -> void:
-	print("[MAIN] _setup_gps_view() ejecutado")
 	var gps_scene: PackedScene = preload("res://scenes/gps_map.tscn")
 	gps_map = gps_scene.instantiate()
 	add_child(gps_map)
-	print("[MAIN] gps_map agregado a escena. visible: ", gps_map.visible)
 	gps_map.player_entered_island.connect(_on_player_entered_island)
 	current_view = View.GPS
+	await get_tree().process_frame
+	gps_map.queue_redraw()
 
 func _on_player_entered_island(island_pos: Vector2) -> void:
 	if current_view == View.DUNGEON:
@@ -129,38 +131,73 @@ func open_map() -> void:
 		islands = gps_map.islands
 	MapButton.open_map(dungeon, islands)
 
+func _on_sail_pressed() -> void:
+	main_hud.disable_for_menu()
+	var menu: CanvasLayer = preload("res://scenes/destinationmenu.tscn").instantiate()
+	add_child(menu)
+	menu.menu_closed.connect(func():
+		main_hud.enable_after_menu()
+		main_hud.input_enabled = true
+	)
+
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		if event.pressed and event.keycode == KEY_M:
 			open_map()
 
-func _on_sail_pressed() -> void:
-	_open_destination_menu()
 
-func _open_destination_menu() -> void:
-	var menu: CanvasLayer = preload("res://scenes/destinationmenu.tscn").instantiate()
-	add_child(menu)
+func _on_action_pressed(state: int) -> void:
+	GameState.debug_log("action pressed state: " + str(state))
+	match state:
+		0:
+			pass
+		1:
+			if is_instance_valid(gps_map):
+				gps_map._on_enter_island()
+		2:
+			_on_sail_pressed()
+		3:
+			if is_instance_valid(current_dungeon):
+				current_dungeon.visible = true
+				if is_instance_valid(gps_map):
+					gps_map.visible = false
+		4:
+			if is_instance_valid(current_dungeon):
+				current_dungeon._on_board_pressed()
+
+func update_action_state(state: int) -> void:
+	if is_instance_valid(main_hud):
+		main_hud.set_action_state(state)
+
+func _on_menu_pressed() -> void:
+	pass
+
+func _on_map_pressed() -> void:
+	var map = get_node_or_null("MapOverlay")
+	if is_instance_valid(map):
+		map.queue_free()
+	else:
+		MapButton._open_map()
 
 func _on_voyage_arrived(destination_id: String) -> void:
+	GameState.debug_log("voyage_arrived: " + destination_id)
 	var menu: CanvasLayer = preload("res://scenes/arrival_menu.tscn").instantiate()
+	GameState.debug_log("menu created: " + str(is_instance_valid(menu)))
 	var island_name: String = GameState.get_island_name(destination_id)
+	GameState.debug_log("island_name: " + island_name)
 	menu.set_island_name(island_name)
 	add_child(menu)
+	GameState.debug_log("menu added to scene")
 	menu.go_ashore.connect(_on_arrival_go_ashore)
 	menu.stay_onboard.connect(_on_arrival_stay)
 	menu.set_sail.connect(_on_arrival_set_sail)
-
-func _on_arrival_stay() -> void:
-	pass
 
 func _on_arrival_go_ashore() -> void:
 	if is_instance_valid(current_dungeon):
 		current_dungeon.queue_free()
 		current_dungeon = null
-	
 	var island_pos := Vector2(GameManager.home_lat, GameManager.home_lng)
 	var p_seed := int(island_pos.x) * 73856093 ^ int(island_pos.y) * 19349663
-	
 	var dungeon_scene: PackedScene = preload("res://scenes/dungeon.tscn")
 	current_dungeon = dungeon_scene.instantiate()
 	add_child(current_dungeon)
@@ -168,8 +205,10 @@ func _on_arrival_go_ashore() -> void:
 	current_dungeon.player_exited_dungeon.connect(_on_player_exited_dungeon)
 	current_dungeon.destination_chosen.connect(_on_destination_chosen)
 	current_view = View.DUNGEON
-	
 	gps_map.visible = false
 
+func _on_arrival_stay() -> void:
+	pass
+
 func _on_arrival_set_sail() -> void:
-	_open_destination_menu()
+	_on_sail_pressed()

@@ -2,10 +2,12 @@ extends CanvasLayer
 
 signal menu_closed
 
-@onready var island_list: VBoxContainer = $Panel/ScrollContainer/IslandList
+@onready var island_list: VBoxContainer = $Panel/ContentMargin/ScrollContainer/IslandList
 @onready var loading_label: Label = $Panel/LoadingLabel
 
 var _buttons: Array = []
+var _btn_y_offsets: Array = []
+var _selecting: bool = false
 
 func _ready() -> void:
 	load_destinations()
@@ -49,22 +51,46 @@ func load_destinations() -> void:
 	cancel_btn.set_meta("distance_km", 0.0)
 	island_list.add_child(cancel_btn)
 	_buttons.append(cancel_btn)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_btn_y_offsets.clear()
+	var y: float = 0.0
+	for btn in _buttons:
+		_btn_y_offsets.append(y)
+		GameState.debug_log(btn.text.left(8) + " h:" + str(btn.size.y) + " y:" + str(y))
+		y += btn.size.y
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventScreenTouch and event.pressed:
-		for btn in _buttons:
-			if not is_instance_valid(btn):
-				continue
-			if btn.get_global_rect().has_point(event.position):
-				var island_id: String = btn.get_meta("island_id", "")
-				if island_id == "__cancel__":
-					_on_cancel_pressed()
-				else:
-					var distance_km: float = btn.get_meta("distance_km", 0.0)
-					_on_island_selected(island_id, distance_km)
-				return
+	if _selecting:
+		return
+	if not event is InputEventScreenTouch:
+		return
+	if not event.pressed:
+		return
+	get_viewport().set_input_as_handled()
+	var raw_y: float = event.position.y
+	var adj_y: float = raw_y - 90.0
+
+	for i in range(_buttons.size()):
+		var btn = _buttons[i]
+		if not is_instance_valid(btn):
+			continue
+		var y_start: float = _btn_y_offsets[i] if i < _btn_y_offsets.size() else 0.0
+		var y_end: float = y_start + btn.size.y if btn.size.y > 0 else y_start + 31.0
+		var btn_rect: Rect2 = Rect2(0.0, y_start, 720.0, y_end - y_start)
+		if btn_rect.has_point(Vector2(event.position.x, adj_y)):
+			var island_id: String = btn.get_meta("island_id", "")
+			if island_id == "__cancel__":
+				_on_cancel_pressed()
+			else:
+				var distance_km: float = btn.get_meta("distance_km", 0.0)
+				_on_island_selected(island_id, distance_km)
+			return
 
 func _on_island_selected(island_id: String, _distance_km: float) -> void:
+	if _selecting:
+		return
+	_selecting = true
 	await VoyageManager.start_voyage(island_id)
 	menu_closed.emit()
 	queue_free()

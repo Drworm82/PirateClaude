@@ -23,7 +23,8 @@ func _input(event: InputEvent) -> void:
 	var pos: Vector2 = Vector2.ZERO
 	if event is InputEventScreenTouch and event.pressed:
 		pressed = true
-		pos = event.position
+		var safe_y: float = float(DisplayServer.get_display_safe_area().position.y)
+		pos = Vector2(event.position.x, event.position.y - safe_y)
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		pressed = true
 		pos = event.position

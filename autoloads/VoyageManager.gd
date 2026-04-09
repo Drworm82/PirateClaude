@@ -1,6 +1,6 @@
 extends Node
 
-const SHIP_SPEED_KMH: float = 5.0
+const SHIP_SPEED_KMH: float = 500.0
 const SHIP_RANGE_KM: float = 5.0
 const DOBLONES_PER_KM: int = 2
 
@@ -56,6 +56,8 @@ func _tick() -> void:
 	voyage_updated.emit(seconds_remaining, doblones_remaining, progress)
 
 func start_voyage(destination_island_id: String) -> void:
+	if GameState.get_player_id() == "":
+		return
 	var distance_km: float = GameState.get_distance_to(destination_island_id)
 	var duration_seconds: int = int((distance_km / SHIP_SPEED_KMH) * 3600.0)
 	var now: float = Time.get_unix_time_from_system()
