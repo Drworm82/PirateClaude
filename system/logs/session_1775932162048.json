@@ -1,0 +1,16 @@
+{
+  "feature": "agregar variable export llamada ship_tier de tipo int en scripts/ship.gd",
+  "date": "2026-04-11T18:29:22.047Z",
+  "steps": [
+    {
+      "step": "Add @export var ship_tier: int = 0 to scripts/ship.gd",
+      "status": "ok",
+      "ms": 113148
+    },
+    {
+      "step": "Save and reload the Godot project to see changes",
+      "status": "ok",
+      "ms": 38772
+    }
+  ]
+}

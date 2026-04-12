@@ -43,6 +43,9 @@ func _tick() -> void:
 	var doblones_at_departure: int = active_voyage.get("doblones_at_departure", 0)
 	var doblones_remaining: int = doblones_at_departure - int(km_traveled * DOBLONES_PER_KM)
 
+	# Mantener en memoria sincronizado
+	GameManager.doblones_onboard = maxi(0, doblones_remaining)
+
 	if doblones_remaining <= 0:
 		_set_drifting()
 		return
@@ -56,16 +59,21 @@ func _tick() -> void:
 	voyage_updated.emit(seconds_remaining, doblones_remaining, progress)
 
 func start_voyage(destination_island_id: String) -> void:
+	GameState.debug_log("start_voyage dob:" + str(GameManager.doblones) + " onboard:" + str(GameManager.doblones_onboard))
 	if GameState.get_player_id() == "":
 		return
 	var distance_km: float = GameState.get_distance_to(destination_island_id)
 	var duration_seconds: int = int((distance_km / SHIP_SPEED_KMH) * 3600.0)
 	var now: float = Time.get_unix_time_from_system()
-	var doblones: int = GameState.get_doblones_onboard()
-	if doblones == 0:
+
+	# ── Calcular doblones a embarcar ──────────────────────────────────────
+	# Usar onboard si ya hay un viaje activo, si no tomar de doblones en tierra
+	var doblones: int = GameManager.doblones_onboard
+	if doblones <= 0:
 		doblones = GameManager.doblones
-		GameManager.doblones_onboard = doblones
-		GameManager.doblones = 0
+	# Mover todos los doblones disponibles al barco
+	GameManager.doblones_onboard = doblones
+	GameManager.doblones = 0
 
 	var payload: Dictionary = {
 		"player_id": GameState.get_player_id(),
@@ -97,6 +105,7 @@ func start_voyage(destination_island_id: String) -> void:
 			"distance_km": distance_km,
 			"status": "sailing"
 		}
+		await GameManager.save_player_state()
 		_timer.start(1.0)
 
 func check_active_voyage() -> void:
@@ -134,10 +143,13 @@ func _set_arrived() -> void:
 	_timer.stop()
 	var destination_id: String = active_voyage.destination_island_id
 
-	if destination_id == GameState.get_current_island_id():
-		var doblones_onboard: int = GameState.get_doblones_onboard()
-		GameManager.doblones += doblones_onboard
-		GameState.set_doblones_onboard(0)
+	# Devolver doblones sobrantes a tierra
+	var sobrantes: int = GameManager.doblones_onboard
+	if sobrantes > 0:
+		GameManager.doblones += sobrantes
+		GameManager.doblones_onboard = 0
+
+	GameState.set_current_island_id(destination_id)
 
 	var http: HTTPRequest = SupabaseClient.upsert("voyages", {
 		"id": active_voyage.id,
@@ -145,17 +157,21 @@ func _set_arrived() -> void:
 	})
 	await http.request_completed
 
-	GameState.set_current_island_id(destination_id)
 	active_voyage = {}
+	await GameManager.save_player_state()
 	voyage_arrived.emit(destination_id)
 
 func _set_drifting() -> void:
+	_timer.stop()
+	GameManager.doblones_onboard = 0
+	GameManager.doblones = 0
 	var http: HTTPRequest = SupabaseClient.upsert("voyages", {
 		"id": active_voyage.id,
 		"status": "drifting"
 	})
 	await http.request_completed
 	active_voyage = {}
+	await GameManager.save_player_state()
 	voyage_drifting.emit()
 
 func _iso_to_unix(iso: String) -> float:

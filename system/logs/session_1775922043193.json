@@ -1,0 +1,21 @@
+{
+  "feature": "agregar variable export llamada ship_tier de tipo int en scripts/ship.gd",
+  "date": "2026-04-11T15:40:43.193Z",
+  "steps": [
+    {
+      "step": "Create scripts/ship.gd with an @export var ship_tier: int = 0",
+      "status": "ok",
+      "ms": 135451
+    },
+    {
+      "step": "Add function travel_to(island_id: String) to scripts/ship.gd",
+      "status": "ok",
+      "ms": 251829
+    },
+    {
+      "step": "Modify scripts/player.gd to add a reference to the current ship node",
+      "status": "ok",
+      "ms": 624215
+    }
+  ]
+}

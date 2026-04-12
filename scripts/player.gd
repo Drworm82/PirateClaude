@@ -1,32 +1,32 @@
 extends CharacterBody2D
-class_name Player
 
-const SPEED := 200.0
+@export var speed := 200.0
 
-var can_move: bool = true
-var bounds_min: Vector2 = Vector2.ZERO
-var bounds_max: Vector2 = Vector2(1280, 1280)
+var bounds_max: Vector2 = Vector2.ZERO  # límite del dungeon, asignado por dungeon.gd
+var can_move: bool = true               # desactivado durante menús
 
-func _ready() -> void:
-	var texture := load("res://assets/sprites/pirates.webp")
-	if texture:
-		var sprite := $Sprite2D
-		sprite.texture = texture
-		sprite.region_enabled = true
-		sprite.region_rect = Rect2(711, 832, 205, 332)
-		sprite.scale = Vector2(0.25, 0.25)
-
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if not can_move:
+		velocity = Vector2.ZERO
+		move_and_slide()
 		return
-	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	velocity = dir * SPEED
+
+	var direction := Vector2.ZERO
+	# Joystick virtual (Android) — move_left/right/up/down
+	direction.x = Input.get_action_strength("move_right") - Input.get_action_strength("move_left")
+	direction.y = Input.get_action_strength("move_down") - Input.get_action_strength("move_up")
+	# Teclado PC — ui_left/right/up/down como fallback
+	if direction == Vector2.ZERO:
+		direction.x = Input.get_action_strength("ui_right") - Input.get_action_strength("ui_left")
+		direction.y = Input.get_action_strength("ui_down") - Input.get_action_strength("ui_up")
+
+	velocity = direction.normalized() * speed
 	move_and_slide()
-	position.x = clamp(position.x, bounds_min.x + 16, bounds_max.x - 16)
-	position.y = clamp(position.y, bounds_min.y + 16, bounds_max.y - 16)
-	if dir != Vector2.ZERO:
-		rotation = dir.angle() + PI / 2.0
+
+	# Limitar posición dentro del dungeon si bounds_max está definido
+	if bounds_max != Vector2.ZERO:
+		position.x = clamp(position.x, 0.0, bounds_max.x)
+		position.y = clamp(position.y, 0.0, bounds_max.y)
 
 func exit_dungeon() -> void:
-	can_move = false
-	velocity = Vector2.ZERO
+	pass

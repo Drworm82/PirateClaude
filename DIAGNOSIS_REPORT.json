@@ -1,0 +1,360 @@
+{
+  "generated": "2026-04-12T15:54:38.916Z",
+  "project": "C:\\Users\\Enrique\\Documents\\PirateClaude_AI",
+  "stats": {
+    "gdScripts": 29,
+    "scenes": 15,
+    "totalFiles": 44
+  },
+  "static_analysis": {
+    "duplicates": [],
+    "largeFiles": [
+      {
+        "path": "scripts/gps_map.gd",
+        "loc": 335,
+        "funcs": 17
+      },
+      {
+        "path": "scripts/main.gd",
+        "loc": 267,
+        "funcs": 22
+      },
+      {
+        "path": "scripts/game_manager.gd",
+        "loc": 239,
+        "funcs": 20
+      },
+      {
+        "path": "autoloads/VoyageManager.gd",
+        "loc": 178,
+        "funcs": 10
+      },
+      {
+        "path": "scripts/map_overlay.gd",
+        "loc": 177,
+        "funcs": 10
+      },
+      {
+        "path": "scripts/supabase.gd",
+        "loc": 172,
+        "funcs": 14
+      },
+      {
+        "path": "scripts/dungeon.gd",
+        "loc": 150,
+        "funcs": 12
+      },
+      {
+        "path": "scripts/ship_interior.gd",
+        "loc": 121,
+        "funcs": 6
+      },
+      {
+        "path": "scripts/virtual_joystick.gd",
+        "loc": 109,
+        "funcs": 8
+      },
+      {
+        "path": "scripts/gps_service.gd",
+        "loc": 107,
+        "funcs": 7
+      },
+      {
+        "path": "scripts/main_hud.gd",
+        "loc": 102,
+        "funcs": 10
+      },
+      {
+        "path": "DestinationMenu.gd",
+        "loc": 100,
+        "funcs": 5
+      },
+      {
+        "path": "autoloads/GameState.gd",
+        "loc": 62,
+        "funcs": 12
+      },
+      {
+        "path": "scripts/island_generator.gd",
+        "loc": 59,
+        "funcs": 4
+      }
+    ],
+    "godScripts": [
+      {
+        "path": "scripts/game_manager.gd",
+        "funcs": 20,
+        "names": "_ready, _on_gps_location, _on_gps_error, _sync_home_position, initialize, _load_or_create_player, _create_player, _create_or_find_home_island, _haversine_km, save_player, repair_ship, damage_ship, log_debug, load_islands, load_island_knowledge, unlock_island_knowledge, _find_home_island, get_doblones_onboard, set_doblones_onboard, save_player_state"
+      },
+      {
+        "path": "scripts/gps_map.gd",
+        "funcs": 17,
+        "names": "_ready, get_home_island, _on_home_ready, _place_player_at_center, _place_islands_relative, _world_to_screen, _physics_process, start_travel, _on_enter_island, _draw, update_player_position, _on_player_moved, _load_islands_from_supabase, _center_on_home_island, _exit_tree, _on_voyage_updated, _update_voyage_hud"
+      },
+      {
+        "path": "scripts/main.gd",
+        "funcs": 22,
+        "names": "_ready, _setup_gps_view, _enter_ship_interior, _exit_ship_interior, _toggle_ship_view, _on_voyage_updated, _on_player_entered_island, _on_destination_chosen, _on_player_exited_dungeon, _on_travel_completed, _on_result_closed, open_map, _on_sail_pressed, _input, _on_action_pressed, update_action_state, _on_menu_pressed, _on_map_pressed, _on_voyage_arrived, _on_arrival_go_ashore, _on_arrival_stay, _on_arrival_set_sail"
+      }
+    ],
+    "anonymous": [
+      {
+        "path": "autoloads/GameState.gd",
+        "extends": "Node"
+      },
+      {
+        "path": "autoloads/VoyageManager.gd",
+        "extends": "Node"
+      },
+      {
+        "path": "DestinationMenu.gd",
+        "extends": "CanvasLayer"
+      },
+      {
+        "path": "scenes/arrival_menu.gd",
+        "extends": "CanvasLayer"
+      },
+      {
+        "path": "scenes/voyagehud.gd",
+        "extends": "CanvasLayer"
+      },
+      {
+        "path": "scripts/context_action_button.gd",
+        "extends": "CanvasLayer"
+      },
+      {
+        "path": "scripts/debug_overlay.gd",
+        "extends": "CanvasLayer"
+      },
+      {
+        "path": "scripts/game_manager.gd",
+        "extends": "Node"
+      },
+      {
+        "path": "scripts/gps_service.gd",
+        "extends": "Node"
+      },
+      {
+        "path": "scripts/main_hud.gd",
+        "extends": "CanvasLayer"
+      },
+      {
+        "path": "scripts/map_button.gd",
+        "extends": "Node"
+      },
+      {
+        "path": "scripts/map_overlay.gd",
+        "extends": "CanvasLayer"
+      },
+      {
+        "path": "scripts/player.gd",
+        "extends": "CharacterBody2D"
+      },
+      {
+        "path": "scripts/supabase.gd",
+        "extends": "Node"
+      },
+      {
+        "path": "scripts/travel_events.gd",
+        "extends": "Node"
+      },
+      {
+        "path": "scripts/travel_result.gd",
+        "extends": "CanvasLayer"
+      },
+      {
+        "path": "scripts/virtual_joystick.gd",
+        "extends": "Control"
+      }
+    ],
+    "untypedVars": [
+      {
+        "path": "scripts/gps_map.gd",
+        "count": 4,
+        "vars": [
+          "player_screen_pos",
+          "initialized",
+          "_map_initialized",
+          "joystick"
+        ]
+      }
+    ],
+    "orphanSignals": [
+      {
+        "path": "autoloads/VoyageManager.gd",
+        "signals": [
+          "voyage_updated",
+          "voyage_arrived",
+          "voyage_drifting",
+          "check_completed"
+        ]
+      },
+      {
+        "path": "DestinationMenu.gd",
+        "signals": [
+          "menu_closed"
+        ]
+      },
+      {
+        "path": "scenes/arrival_menu.gd",
+        "signals": [
+          "stay_onboard",
+          "go_ashore",
+          "set_sail"
+        ]
+      },
+      {
+        "path": "scripts/boat.gd",
+        "signals": [
+          "player_boarded"
+        ]
+      },
+      {
+        "path": "scripts/context_action_button.gd",
+        "signals": [
+          "action_pressed"
+        ]
+      },
+      {
+        "path": "scripts/dungeon.gd",
+        "signals": [
+          "player_exited_dungeon",
+          "destination_chosen"
+        ]
+      },
+      {
+        "path": "scripts/game_manager.gd",
+        "signals": [
+          "home_position_ready",
+          "player_position_changed"
+        ]
+      },
+      {
+        "path": "scripts/gps_map.gd",
+        "signals": [
+          "player_entered_island",
+          "travel_completed"
+        ]
+      },
+      {
+        "path": "scripts/gps_service.gd",
+        "signals": [
+          "location_updated",
+          "location_error"
+        ]
+      },
+      {
+        "path": "scripts/main_hud.gd",
+        "signals": [
+          "menu_pressed",
+          "work_pressed",
+          "inventory_pressed",
+          "map_pressed",
+          "action_pressed"
+        ]
+      },
+      {
+        "path": "scripts/map_overlay.gd",
+        "signals": [
+          "closed"
+        ]
+      },
+      {
+        "path": "scripts/supabase.gd",
+        "signals": [
+          "auth_completed"
+        ]
+      },
+      {
+        "path": "scripts/travel_result.gd",
+        "signals": [
+          "closed"
+        ]
+      }
+    ],
+    "isolatedScripts": [
+      {
+        "path": "scripts/archivo.gd",
+        "reason": "sin referencias en scripts ni escenas"
+      },
+      {
+        "path": "scripts/island_generator.gd",
+        "reason": "sin referencias en scripts ni escenas"
+      },
+      {
+        "path": "scripts/map_button.gd",
+        "reason": "sin referencias en scripts ni escenas"
+      },
+      {
+        "path": "scripts/ship.gd",
+        "reason": "sin referencias en scripts ni escenas"
+      },
+      {
+        "path": "scripts/travel_events.gd",
+        "reason": "sin referencias en scripts ni escenas"
+      }
+    ]
+  },
+  "llmAnalysis": {
+    "architectural_issues": [
+      {
+        "severity": "low",
+        "file": "game_manager.gd",
+        "issue": "Class GameManager has many functions that are not directly related to the main gameplay, such as _load_or_create_player and _create_player.",
+        "fix": "Consider splitting this class into smaller classes or modules to make it easier to understand and maintain."
+      },
+      {
+        "severity": "medium",
+        "file": "gps_service.gd",
+        "issue": "The method get_current_location in GpsService doesn't return anything.",
+        "fix": "Add a return statement that returns the current location, or add an appropriate signal to notify callers when the location has been updated."
+      }
+    ],
+    "missing_systems": [
+      {
+        "name": "Inventory system",
+        "why_needed": "The game requires a dynamic inventory system for players.",
+        "suggested_file": "inventory.gd"
+      },
+      {
+        "name": "Work system",
+        "why_needed": "Players should be able to work at certain locations, like islands.",
+        "suggested_file": "work.gd"
+      }
+    ],
+    "risk_areas": [
+      {
+        "area": "GPS accuracy",
+        "reason": "The GPS service has poor accuracy in some areas.",
+        "affected_files": [
+          "gps_service.gd"
+        ]
+      },
+      {
+        "area": "User authentication",
+        "reason": "Currently, the game allows users to sign in anonymously. This might not be secure enough for all cases.",
+        "affected_files": [
+          "supabase.gd"
+        ]
+      }
+    ],
+    "refactor_suggestions": [
+      {
+        "priority": "medium",
+        "description": "The GameManager class has many functions that are not directly related to the gameplay. Consider splitting it into smaller classes or modules.",
+        "files": [
+          "game_manager.gd"
+        ]
+      },
+      {
+        "priority": "low",
+        "description": "In GpsService, consider adding a return statement for get_current_location method that returns the current location when available.",
+        "files": [
+          "gps_service.gd"
+        ]
+      }
+    ],
+    "overall_health": "fair",
+    "sprint_recommendation": "The team should focus on improving the GPS accuracy and user authentication before moving to other areas."
+  }
+}

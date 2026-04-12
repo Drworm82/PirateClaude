@@ -1,0 +1,41 @@
+{
+  "feature": "Fix: agregar bounds_min y bounds_max como Vector2 en scripts/player.gd — dungeon.gd falla al asignarlos en _center_camera()",
+  "date": "2026-04-10T08:41:21.310Z",
+  "steps": [
+    {
+      "step": {
+        "step1": "Crear un script base de la navegación en Godot."
+      },
+      "status": "error",
+      "ms": 4
+    },
+    {
+      "step": {
+        "step2": "Incluir 'bounds_min' y 'bounds_max' como Vector2 en scripts/player.gd."
+      },
+      "status": "error",
+      "ms": 2
+    },
+    {
+      "step": {
+        "step3": "Realizar la implementación del movimiento entre nodos utilizando los nuevos atributos 'bounds_min' y 'bounds_max'."
+      },
+      "status": "error",
+      "ms": 3
+    },
+    {
+      "step": {
+        "step4": "Conectar el input del jugador al script de navegación."
+      },
+      "status": "error",
+      "ms": 2
+    },
+    {
+      "step": {
+        "_center_camera": "Integrar la función '_center_camera()' con los nuevos atributos, asegurando su correcto funcionamiento."
+      },
+      "status": "error",
+      "ms": 3
+    }
+  ]
+}

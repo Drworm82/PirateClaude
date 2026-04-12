@@ -1,0 +1,16 @@
+{
+  "feature": "agregar variable export llamada ship_tier de tipo int en scripts/ship.gd",
+  "date": "2026-04-11T15:13:35.814Z",
+  "steps": [
+    {
+      "step": "Create a new file called ship.gd in scripts directory",
+      "status": "ok",
+      "ms": 297411
+    },
+    {
+      "step": "Add an @export var ship_tier: int = 0 to the newly created ship.gd file",
+      "status": "ok",
+      "ms": 117512
+    }
+  ]
+}

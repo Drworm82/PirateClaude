@@ -15,10 +15,11 @@
 
 | Archivo | Descripción |
 |---------|-------------|
-| `main.gd` | Controlador principal. Gestiona transiciones GPS↔Dungeon, viajes, eventos, mapas. Contiene SailButton para abrir DestinationMenu desde vista GPS |
-| `gps_map.gd` | Vista del océano. Renderiza islas, jugador, travel marker, HUD de doblones/HP. Botón contextual "Entrar" cerca de islas |
+| `main.gd` | Controlador principal. Gestiona transiciones GPS↔Dungeon↔ShipInterior, viajes, eventos, mapas. View enum: GPS/DUNGEON/SHIP |
+| `gps_map.gd` | Vista del océano. Renderiza islas, jugador, travel marker, HUD de doblones/HP. Actualiza Action Button via main.update_action_state() |
 | `dungeon.gd` | Vista de isla. Generación procedural, zona de salida, botón contextual "Abordar" cerca del bote |
-| `player.gd` | Movimiento WASD/joystick, límites de mapa, rotación según dirección |
+| `ship_interior.gd` | Vista cubierta del barco durante viaje. _draw() con casco/cubierta/mástil/barriles/timón. Camera2D propia. Player instanciado en escena |
+| `player.gd` | Movimiento WASD/joystick, límites de mapa (bounds_max), can_move flag, rotación según dirección. Lee move_left/right/up/down |
 | `boat.gd` | Sprite del bote, detección de proximidad, señal de embarque |
 | `travel_events.gd` | Generador de eventos aleatorios (tesoro/tormenta/nada) |
 | `travel_result.gd` | Overlay de resultado de viaje con título, descripción, delta de doblones |
@@ -30,7 +31,8 @@
 | `supabase_config.gd` | Credenciales de Supabase (NO committing a git) |
 | `island_generator.gd` | Generación procedural de islas con Perlin (reservado para Sprint 16+) |
 | `virtual_joystick.gd` | Joystick virtual flotante. Maneja touch y mouse. Inyecta Input actions. Vive en main.tscn |
-| `context_action_button.gd` | Botón contextual táctil. Aparece/desaparece según proximidad. Layer 20 |
+| `main_hud.gd` | HUD global persistente. Header (≡, título, Trabajar) + BottomBar (Inventario, Action Button, Mapa). Detección manual de touch. Señales: menu_pressed, work_pressed, inventory_pressed, map_pressed, action_pressed. set_action_state(state) para cambiar Action Button contextualmente |
+| `debug_overlay.gd` | Overlay global de debug (Layer 99). Método log(msg) accesible via GameState.debug_log(). Muestra últimas 5 líneas |
 
 ### Autoloads (`autoloads/`)
 
@@ -43,17 +45,19 @@
 
 | Archivo | Descripción |
 |---------|-------------|
-| `main.tscn` | Escena raíz. Contiene VirtualJoystick, SailButton y VoyageHUD |
-| `gps_map.tscn` | Vista océano. Contiene ContextActionButton instanciado en runtime |
-| `dungeon.tscn` | Vista isla con TileMap, Player, Boat. ContextActionButton instanciado en runtime |
+| `main.tscn` | Escena raíz. Contiene VirtualJoystick, VoyageHUD, MainHud, DebugOverlay |
+| `gps_map.tscn` | Vista océano. GPSMap (Node2D con _draw()). Detecta proximidad a islas, actualiza Action Button via main.update_action_state() |
+| `dungeon.tscn` | Vista isla con TileMap, Player, Boat. Detecta proximidad al Boat, actualiza Action Button. Deshabilita Abordar durante viaje activo |
+| `ship_interior.tscn` | Node2D + Player instanciado. Cubierta del barco dibujada con _draw(). Camera2D propia |
+| `main_hud.tscn` | CanvasLayer Layer 25. Header (top 60px) + BottomBar (bottom 80px). Grupos: main_hud |
 | `player.tscn` | Nodo del jugador con sprite y Camera2D |
 | `boat.tscn` | Sprite del bote en la orilla sur |
 | `destinationmenu.tscn` | CanvasLayer con lista de islas alcanzables desde Supabase. Detección manual de touch |
 | `voyagehud.tscn` | CanvasLayer (Layer 10) con timer de viaje y doblones a bordo. Invisible cuando no hay viaje activo |
+| `arrival_menu.tscn` | CanvasLayer Layer 15. Opciones: Bajar a isla / Quedarse a bordo / Zarpar |
 | `travel_result.tscn` | CanvasLayer con panel de resultado |
 | `map_overlay.tscn` | Overlay completo del mapa |
 | `virtual_joystick.tscn` | CanvasLayer (Layer 2) → JoystickControl (Control, Full Rect, grupo: joystick) → OuterRing + InnerDot |
-| `context_action_button.tscn` | CanvasLayer (Layer 20) → Button (Bottom Center, 200x60) |
 
 ### Escenas raíz (`res://`)
 
@@ -113,7 +117,10 @@
 - Sprint 24: Diseño de sistema de conocimiento de islas (5 niveles). Tablas islands y player_island_knowledge creadas
 - Sprint 25: Islas cargadas desde Supabase. Isla home creada con coords GPS reales. Jugador centrado sobre isla home. Sin movimiento libre en vista GPS
 - Sprint 26: Sistema de viaje entre islas. Menú de destinos desde Supabase (get_reachable_islands RPC). VoyageManager con timer en tiempo real (timestamps en Supabase, persiste si se cierra la app). VoyageHUD con countdown y doblones a bordo. Doblones como combustible consumido gradualmente. Estado a la deriva si se agotan. GameState como puente a GameManager. Detección manual de touch en menú de destinos
-- Sprint 27: Menú de llegada a isla destino (ArrivalMenu, CanvasLayer Layer 15). 3 opciones: bajar a isla (→ dungeon.tscn via add_child), quedarse a bordo, zarpar (→ DestinationMenu). Doblones se transfieren al banco solo al llegar a isla base. voyage_arrived emite destination_id. VoyageManager usa unix timestamps internamente. Fix JWT refresh awaitable. Fix spawn del jugador fuera de exit zone. Fix dungeon anterior eliminado al bajar a nueva isla. DebugOverlay global agregado en main.tscn (Layer 99).
+- Sprint 27: Menú de llegada a isla destino (ArrivalMenu, CanvasLayer Layer 15). 3 opciones: bajar a isla (→ dungeon.tscn via add_child), quedarse a bordo, zarpar (→ DestinationMenu). Doblones se transfieren al banco solo al llegar a isla base. Fix JWT refresh awaitable. Fix spawn del jugador fuera de exit zone. Fix dungeon anterior eliminado al bajar a nueva isla. DebugOverlay global agregado en main.tscn (Layer 99).
+- Sprint 28: Movimiento del bote en GPS durante viaje (interpolación lat/lng con progress). Persistencia de viaje al cerrar app (check_active_voyage llamado desde main._ready() después de initialize()). Fix: VoyageManager usa unix timestamps internamente. Fix: JWT siempre refresca al iniciar. Fix: player_id asignado desde SupabaseClient._user_id en initialize().
+- Sprint 29: MainHud global (Layer 25) con Header y BottomBar. Action Button contextual: Entrar/Zarpar/Ver barco/Abordar/Deshabilitado según contexto. Detección manual de touch en MainHud. Eliminados ContextActionButton y SailButton. Fix _draw() en gps_map inicializado en _physics_process cuando viewport tiene tamaño válido. DestinationMenu y ArrivalMenu usan safe area offset para detección de touch en Android.
+- Sprint 30: Interior del barco durante viaje (ship_interior.gd + ship_interior.tscn). View enum extendido a GPS/DUNGEON/SHIP. Toggle GPS↔ShipInterior con botón "Ver barco". Fix parpadeo Action Button (dungeon.visible=false en _on_voyage_updated). Fix ghost render ship_interior (Camera2D.enabled=false antes de queue_free y al toggle). Fix dungeon invisible al bajar en isla destino.
 
 ---
 
@@ -149,7 +156,7 @@ const DOBLONES_PER_KM: int = 2
 - `_tick()` — cada segundo: calcula segundos restantes y doblones consumidos
 - `_set_arrived()` — actualiza status en Supabase, actualiza GameState.current_island_id
 - `_set_drifting()` — actualiza status en Supabase cuando doblones llegan a 0
-- Signals: `voyage_updated(seconds_remaining, doblones_remaining)`, `voyage_arrived()`, `voyage_drifting()`
+- Signals: `voyage_updated(seconds_remaining, doblones_remaining, progress)`, `voyage_arrived(destination_id)`, `voyage_drifting()`
 
 ---
 
@@ -163,6 +170,8 @@ get_current_island_lng() → GameManager.home_lng
 get_doblones_onboard() → GameManager.doblones
 set_current_island_id(id) → GameManager.home_island_id = id
 get_distance_to(island_id) → haversine desde isla actual a target (usa islands_cache)
+get_island_name(island_id) → nombre de isla desde islands_cache
+get_island_coords(island_id) → {lat, lng} desde islands_cache
 ```
 
 ---
@@ -177,7 +186,7 @@ JavaClassWrapper → ActivityThread → currentApplication() → getApplicationC
 ### Touch en Android
 - Los `Button` nativos de Godot NO detectan touch en Android en este proyecto
 - Solución: detección manual en `_input()` con `InputEventScreenTouch` + `get_global_rect().has_point(event.position)`
-- Aplica a: ContextActionButton, DestinationMenu, TravelResult, y cualquier botón nuevo
+- Aplica a: DestinationMenu, ArrivalMenu, TravelResult, y cualquier botón nuevo
 
 ### Supabase auth
 - Tokens guardados en `user://auth.cfg` via ConfigFile
@@ -188,9 +197,30 @@ JavaClassWrapper → ActivityThread → currentApplication() → getApplicationC
 - No usar `class_name` en Autoloads en Godot 4
 - GDScript strict mode: anotaciones de tipo explícitas en todas las variables y funciones
 
+### Safe Area en Android
+- DisplayServer.get_display_safe_area().position.y devuelve el offset del notch
+- Restar este valor al event.position.y para coordenadas correctas en CanvasLayer
+- DestinationMenu y ArrivalMenu usan adj_y = raw_y - 90.0 (margin_top fijo)
+
+### Action Button contextual
+- Estado se actualiza desde gps_map.gd y dungeon.gd via main_node.update_action_state(int)
+- Durante viaje activo en dungeon: estado NONE (0)
+- Estados: 0=NONE, 1=ENTER_ISLAND, 2=SAIL, 3=VIEW_SHIP, 4=BOARD
+
+### _draw() en Android
+- get_viewport_rect().size puede ser (0,0) en _ready()
+- Solución: calcular _map_center en _physics_process cuando size.x > 0
+- Usar _map_initialized: bool para ejecutar solo una vez
+
 ### SupabaseClient.supabase_rpc()
 - Renombrado de `rpc()` a `supabase_rpc()` porque `rpc` es función reservada del sistema multiplayer de Godot 4
 - Patrón: devuelve HTTPRequest, usar `await http.request_completed`
+
+### Camera2D y visibilidad de vistas
+- Al ocultar un Node2D que tiene Camera2D activa, siempre hacer `camera.enabled = false` ANTES de `visible = false` o `queue_free()`
+- De lo contrario la Camera2D sigue siendo `current` y produce ghost render de esa vista sobre otras
+- Al mostrar una vista con Camera2D propia: `camera.enabled = true` + `camera.make_current()`
+- Aplica a: ShipInterior al toggle y al destruir
 
 ---
 
@@ -201,12 +231,6 @@ JavaClassWrapper → ActivityThread → currentApplication() → getApplicationC
 - **Encontrado por**: `get_tree().get_first_node_in_group("joystick")`
 - **Layer**: 2
 - `set_enabled(false/true)` para desactivar con menús
-
-### ContextActionButton
-- **Ubicación**: instanciado en runtime en `gps_map.gd` y `dungeon.gd`
-- **Layer**: 20
-- En GPS map: "Entrar" a menos de 80px de una isla
-- En dungeon: "Abordar" a menos de 80px del bote
 
 ---
 
@@ -253,17 +277,141 @@ player_id, island_id, nivel (1-5)
 
 ---
 
+## Estado actual de scripts clave
+
+> Actualizar esta sección al final de cada sprint. Permite a Claude entender el estado del código sin necesidad de subir archivos.
+
+### main.gd
+
+**Variables de estado:**
+```gdscript
+enum View {GPS, DUNGEON, SHIP}
+var current_view: View = View.GPS
+var gps_map: GPSMap
+var current_dungeon: Dungeon
+var current_ship_interior: ShipInterior = null
+```
+
+**Flujo de vistas:**
+- `_setup_gps_view()` — instancia gps_map.tscn, current_view = GPS
+- `_enter_ship_interior()` — instancia ship_interior.tscn, oculta gps_map, current_view = SHIP
+- `_exit_ship_interior()` — desactiva Camera2D del interior, visible=false, exit_ship() (queue_free), muestra gps_map, current_view = GPS
+- `_toggle_ship_view()` — alterna entre GPS y SHIP: desactiva/activa Camera2D del ship_interior en cada toggle
+
+**Funciones críticas:**
+```
+_on_voyage_updated(seconds, doblones, progress):
+  → si current_dungeon visible: current_dungeon.visible = false
+  → si no hay ship_interior: _enter_ship_interior()
+  → update_action_state(3)
+
+_on_voyage_arrived(destination_id):
+  → _exit_ship_interior()
+  → instancia arrival_menu.tscn
+
+_on_arrival_go_ashore():
+  → queue_free dungeon anterior si existe
+  → gps_map.visible = false
+  → instancia dungeon.tscn (visible por defecto)
+  → current_view = DUNGEON
+
+_on_action_pressed(state):
+  → 1: gps_map._on_enter_island()
+  → 2: _on_sail_pressed() → instancia destinationmenu.tscn
+  → 3: _toggle_ship_view() si hay viaje activo
+  → 4: current_dungeon._on_board_pressed()
+```
+
+---
+
+### gps_map.gd
+
+**Guard:** `if not visible: return` en `_physics_process` (línea ~97)
+
+**Lógica Action Button en _physics_process:**
+```
+si VoyageManager.active_voyage vacío:
+  → cerca de isla: update_action_state(1)
+  → lejos: update_action_state(2)
+sino:
+  → update_action_state(3)  # Ver barco
+```
+
+**_on_voyage_updated:** interpola _player_lat/_player_lng según progress, llama _place_islands_relative(), queue_redraw()
+
+**Señales emitidas:** `player_entered_island(island_pos)`, `travel_completed`
+
+---
+
+### dungeon.gd
+
+**Guard:** `if not visible: return` en `_physics_process` (línea ~62)
+
+**Lógica Action Button en _physics_process:**
+```
+si VoyageManager.active_voyage NO vacío: update_action_state(0)
+sino si dist al Boat < 80px: update_action_state(4)
+sino: update_action_state(0)
+```
+
+**_exit_dungeon():** player.exit_dungeon(), emit player_exited_dungeon, queue_free()
+**_show_destination_menu():** instancia destinationmenu.tscn via get_tree().root.add_child()
+**_on_board_pressed():** llama _show_destination_menu()
+
+---
+
+### ship_interior.gd
+
+**NO tiene guard `if not visible`** — depende de que main.gd desactive su Camera2D.
+
+**_ready():**
+- Desactiva Camera2D del Player ($Player/Camera2D)
+- Crea Camera2D propia, zoom (1.5, 1.5), make_current()
+- joystick.set_enabled(true)
+- player.position = Vector2(0, 20), player.can_move = true
+
+**_physics_process:** clamp posición del player dentro del casco (SHIP_WIDTH=120, SHIP_HEIGHT=220)
+
+**enter_ship(type):** guarda ship_type, queue_redraw()
+
+**exit_ship():**
+- Reactiva Camera2D del Player
+- joystick.set_enabled(false)
+- queue_free()
+
+---
+
+### dungeon.gd — estructura de escena
+```
+dungeon.tscn
+  └─ Node2D (Dungeon)
+       ├─ TileMap
+       ├─ Player (instancia player.tscn)
+       │    └─ Camera2D
+       └─ Boat (instancia boat.tscn)
+```
+
+### ship_interior.tscn — estructura de escena
+```
+ship_interior.tscn
+  └─ Node2D (ShipInterior)
+       └─ Player (instancia player.tscn)
+            └─ Camera2D  ← se desactiva en _ready(), Camera2D propia se agrega dinámicamente
+```
+
+---
+
 ## Próximo sprint
-**Sprint 28** — Por definir
+**Sprint 31** — Por definir
 
 ---
 
 ## Plantilla para chat nuevo
 
----
+```
 Estoy desarrollando PirateWorld, RPG pirata en Godot 4.6.1.
 Stack: GDScript + Supabase + OpenCode en VSC.
-Sprints completados: 1-27.
-Último sprint: 27 — Menú de llegada a isla destino. ArrivalMenu con 3 opciones. Doblones como combustible. Fix JWT refresh. DebugOverlay global.
+Sprints completados: 1-30.
+Último sprint: 30 — Interior del barco durante viaje (ship_interior.gd/tscn). View enum GPS/DUNGEON/SHIP. Toggle GPS↔ShipInterior. Fixes: parpadeo Action Button, ghost render Camera2D, dungeon invisible al desembarcar.
 El contexto completo está en PIRATEWORLD_CONTEXT.md
----
+```

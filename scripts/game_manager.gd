@@ -34,10 +34,8 @@ func _on_gps_location(lat: float, lng: float) -> void:
 		_pending_gps_sync = true
 	emit_signal("player_position_changed", lat, lng)
 
-
 func _on_gps_error(reason: String) -> void:
 	emit_signal("home_position_ready", home_lat, home_lng)
-
 
 func _sync_home_position() -> void:
 	var data = {
@@ -56,24 +54,23 @@ func initialize() -> void:
 	await _load_or_create_player()
 
 func _load_or_create_player() -> void:
-	var http := SupabaseClient.select(
-		"players",
-		"id=eq." + player_id
-	)
+	var http := SupabaseClient.select("players", "id=eq." + player_id)
 	var response: Array = await http.request_completed
 	var body: String = response[3].get_string_from_utf8()
 	var data: Variant = JSON.parse_string(body)
 
 	if data is Array and data.size() > 0:
 		var p: Dictionary = data[0]
-		doblones = int(p.get("doblones", 100))
-		if doblones == 0:
-			doblones = 100
-		prestigio = p.get("prestigio", 0)
-		home_lat = p.get("lat_center", 19.4326)
-		home_lng = p.get("lng_center", -99.1332)
-		ship_hp = p.get("ship_hp", 100)
-		home_island_id = p.get("home_island_id", "")
+		doblones         = int(p.get("doblones", 100))
+		doblones_onboard = int(p.get("doblones_onboard", 0))
+		var ultima_isla  = p.get("ultima_isla_id", null)
+		if ultima_isla != null:
+			home_island_id = str(ultima_isla)
+		prestigio  = p.get("prestigio", 0)
+		home_lat   = p.get("lat_center", 19.4326)
+		home_lng   = p.get("lng_center", -99.1332)
+		ship_hp    = p.get("ship_hp", 100)
+		is_authenticated = true
 		if _pending_gps_sync:
 			_pending_gps_sync = false
 			_sync_home_position()
@@ -87,6 +84,7 @@ func _create_player() -> void:
 	var http := SupabaseClient.insert("players", {
 		"id": player_id,
 		"doblones": 100,
+		"doblones_onboard": 0,
 		"prestigio": 0,
 		"lat_center": home_lat,
 		"lng_center": home_lng,
@@ -95,21 +93,19 @@ func _create_player() -> void:
 	var response: Array = await http.request_completed
 	log_debug("create resp: " + str(response[1]))
 	log_debug("body: " + response[3].get_string_from_utf8().left(60))
+	is_authenticated = true
 	await _create_or_find_home_island()
 
-
 func _create_or_find_home_island() -> void:
-	# Esperar GPS real con timeout de 5 segundos
 	var timeout: float = 5.0
 	var elapsed: float = 0.0
 	while (GpsService.last_lat == 19.4326 and GpsService.last_lng == -99.1332) and elapsed < timeout:
 		await get_tree().create_timer(0.5).timeout
 		elapsed += 0.5
-	
+
 	var lat: float = GpsService.last_lat
 	var lng: float = GpsService.last_lng
 	log_debug("home coords: " + str(snappedf(lat, 0.0001)) + "," + str(snappedf(lng, 0.0001)))
-	# Buscar isla home existente a menos de 500m
 	var http := SupabaseClient.select("islands", "tipo=eq.home")
 	var response: Array = await http.request_completed
 	var body: String = response[3].get_string_from_utf8()
@@ -123,40 +119,28 @@ func _create_or_find_home_island() -> void:
 			var dist: float = _haversine_km(lat, lng, ilat, ilng)
 			if dist < 0.35:
 				found_id = isl.get("id", "")
-				log_debug("home: " + str(snappedf(ilat, 0.0001)) + "," + str(snappedf(ilng, 0.0001)))
-				log_debug("yo: " + str(snappedf(lat, 0.0001)) + "," + str(snappedf(lng, 0.0001)))
 				break
 
 	if found_id == "":
-		# Crear isla home nueva
 		var http2 := SupabaseClient.insert("islands", {
 			"nombre": "Isla " + player_id.left(4),
-			"lat": lat,
-			"lng": lng,
-			"tipo": "home",
-			"terreno": "tropical",
-			"relieve": "colinas",
-			"costa": "playa",
-			"faccion": "Independiente",
-			"poblacion": "pequeña",
+			"lat": lat, "lng": lng,
+			"tipo": "home", "terreno": "tropical",
+			"relieve": "colinas", "costa": "playa",
+			"faccion": "Independiente", "poblacion": "pequeña",
 			"recursos": ["madera", "peces"],
 			"comercio": ["exporta: madera"]
 		})
 		var r2: Array = await http2.request_completed
-		var b2: String = r2[3].get_string_from_utf8()
-		var d2: Variant = JSON.parse_string(b2)
+		var d2: Variant = JSON.parse_string(r2[3].get_string_from_utf8())
 		if d2 is Array and d2.size() > 0:
 			found_id = d2[0].get("id", "")
-			log_debug("isla home creada")
 
 	if found_id != "":
 		home_island_id = found_id
 		SupabaseClient.upsert("player_island_knowledge", {
-			"player_id": player_id,
-			"island_id": found_id,
-			"nivel": 5
+			"player_id": player_id, "island_id": found_id, "nivel": 5
 		})
-
 
 func _haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
 	var R: float = 6371.0
@@ -165,32 +149,34 @@ func _haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
 	var a: float = sin(dlat/2) * sin(dlat/2) + cos(deg_to_rad(lat1)) * cos(deg_to_rad(lat2)) * sin(dlng/2) * sin(dlng/2)
 	return R * 2.0 * atan2(sqrt(a), sqrt(1.0 - a))
 
+# ── save_player: solo stats de combate/reparación ────────────────────────
 func save_player() -> void:
+	if player_id == "":
+		return
 	var http := SupabaseClient.upsert("players", {
 		"id": player_id,
 		"doblones": doblones,
+		"doblones_onboard": doblones_onboard,  # ← corregido: también guarda onboard
 		"prestigio": prestigio,
 		"ship_hp": ship_hp,
 		"ultima_conexion": Time.get_datetime_string_from_system()
 	})
-	var response: Array = await http.request_completed
+	await http.request_completed
 
 func repair_ship(amount: int) -> void:
 	var cost: int = amount * ship_repair_cost
 	if doblones >= cost:
 		doblones -= cost
 		ship_hp = min(ship_hp + amount, ship_hp_max)
-		save_player()
+		await save_player_state()
 
 func damage_ship(amount: int) -> void:
 	ship_hp = max(0, ship_hp - amount)
-
 
 func log_debug(msg: String) -> void:
 	debug_log.append(msg)
 	if debug_log.size() > 8:
 		debug_log.pop_front()
-
 
 func load_islands() -> Array:
 	var http := SupabaseClient.select("islands", "")
@@ -202,9 +188,7 @@ func load_islands() -> Array:
 		log_debug("islas cargadas: " + str(data.size()))
 		return data
 	log_debug("islas err: " + str(response[1]))
-	log_debug("islas body: " + body.left(80))
 	return []
-
 
 func load_island_knowledge() -> Array:
 	var http := SupabaseClient.select(
@@ -218,26 +202,38 @@ func load_island_knowledge() -> Array:
 		return data
 	return []
 
-
 func unlock_island_knowledge(island_id: String, nivel: int) -> void:
-	var data := {
-		"player_id": player_id,
-		"island_id": island_id,
-		"nivel": nivel
-	}
-	SupabaseClient.upsert("player_island_knowledge", data)
+	SupabaseClient.upsert("player_island_knowledge", {
+		"player_id": player_id, "island_id": island_id, "nivel": nivel
+	})
 
 func _find_home_island() -> void:
+	if home_island_id != "":
+		log_debug("home_island_id from ultima_isla: " + home_island_id)
+		return
 	var http := SupabaseClient.select("islands", "tipo=eq.home&order=id&limit=1")
 	var response: Array = await http.request_completed
 	var body: String = response[3].get_string_from_utf8()
 	var data: Variant = JSON.parse_string(body)
 	if data is Array and data.size() > 0:
-		home_island_id = data[0].get("id", "")
-		log_debug("home_island_id: " + home_island_id)
+		home_island_id = str(data[0].get("id", ""))
+		log_debug("home_island_id from DB: " + home_island_id)
 
 func get_doblones_onboard() -> int:
 	return doblones_onboard
 
 func set_doblones_onboard(amount: int) -> void:
 	doblones_onboard = amount
+
+func save_player_state() -> void:
+	if player_id == "":
+		return
+	var payload: Dictionary = {
+		"doblones": doblones,
+		"doblones_onboard": doblones_onboard,
+		"ultima_isla_id": home_island_id,
+		"ultima_conexion": Time.get_datetime_string_from_system() + "Z"
+	}
+	var http: HTTPRequest = SupabaseClient.update("players", payload, "id=eq." + player_id)
+	var response: Array = await http.request_completed
+	GameState.debug_log("save: dob=" + str(doblones) + " onboard=" + str(doblones_onboard) + " code=" + str(response[1]))

@@ -1,0 +1,6 @@
+extends Node2D
+
+@export var ship_tier: int = 0
+
+func _ready() -> void:
+	# Código de inicialización si es necesario

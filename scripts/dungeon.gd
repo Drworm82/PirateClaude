@@ -23,6 +23,13 @@ var exit_zone_rect: Rect2
 var destination_menu: CanvasLayer = null
 var _exit_enabled := true
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_VISIBILITY_CHANGED:
+		if not visible:
+			$Boat/Sprite2D.visible = false
+		else:
+			$Boat/Sprite2D.visible = true
+
 func _ready() -> void:
 	joystick = get_tree().get_first_node_in_group("joystick")
 	if joystick:
@@ -59,6 +66,8 @@ func _ready() -> void:
 		joystick.set_enabled(true)
 
 func _physics_process(_delta: float) -> void:
+	if not visible:
+		return
 	if not is_instance_valid(player):
 		return
 	if not _exit_enabled:
@@ -108,6 +117,9 @@ func _on_board_pressed() -> void:
 	_on_player_boarded("")
 
 func _show_destination_menu() -> void:
+	var boat_sprite = get_node_or_null("Boat/Sprite2D")
+	if boat_sprite:
+		boat_sprite.visible = false
 	if GameManager.ship_hp <= 0:
 		return
 
@@ -121,6 +133,7 @@ func _show_destination_menu() -> void:
 		joystick.set_enabled(false)
 
 func _on_destination_selected(destination: String) -> void:
+	GameState.debug_log("destination_selected: " + destination)
 	if destination_menu:
 		destination_menu.queue_free()
 		destination_menu = null
@@ -137,10 +150,13 @@ func _on_destination_cancelled() -> void:
 	player.can_move = true
 
 func _on_destination_menu_closed() -> void:
+	GameState.debug_log("destination_menu_closed")
 	destination_menu = null
 	player.can_move = true
 	if joystick:
 		joystick.set_enabled(true)
+	if not VoyageManager.active_voyage.is_empty():
+		emit_signal("player_exited_dungeon")
 
 func _exit_dungeon() -> void:
 	player.exit_dungeon()

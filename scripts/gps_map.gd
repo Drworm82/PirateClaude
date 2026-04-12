@@ -94,6 +94,8 @@ func _world_to_screen(lat: float, lng: float) -> Vector2:
 
 
 func _physics_process(delta: float) -> void:
+	if not visible:
+		return
 	if not _map_initialized:
 		var size = get_viewport_rect().size
 		if size.x > 0 and size.y > 0:
@@ -109,10 +111,14 @@ func _physics_process(delta: float) -> void:
 			if player_screen_pos.distance_to(island.pos) < 80.0:
 				nearby_island = island
 				break
-		if not nearby_island.is_empty():
-			main.update_action_state(1)
+		# Solo actualizar Action Button si NO hay viaje activo en VoyageManager
+		if VoyageManager.active_voyage.is_empty():
+			if not nearby_island.is_empty():
+				main.update_action_state(1)
+			else:
+				main.update_action_state(2)
 		else:
-			main.update_action_state(2)
+			main.update_action_state(3)  # viaje activo → Ver barco
 	else:
 		main.update_action_state(3)
 		var dir := (travel_target - player_screen_pos).normalized()

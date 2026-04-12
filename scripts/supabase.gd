@@ -151,6 +151,16 @@ func upsert(table: String, data: Dictionary) -> HTTPRequest:
 	http.request(url, headers, HTTPClient.METHOD_POST, body)
 	return http
 
+func update(table: String, payload: Dictionary, filter: String) -> HTTPRequest:
+	var url: String = BASE_URL + "/rest/v1/" + table + "?" + filter
+	var body: String = JSON.stringify(payload)
+	var headers: Array = _get_headers()
+	headers.append("Prefer: return=minimal")
+	var http: HTTPRequest = HTTPRequest.new()
+	add_child(http)
+	http.request(url, headers, HTTPClient.METHOD_PATCH, body)
+	return http
+
 func supabase_rpc(function_name: String, args: Dictionary) -> HTTPRequest:
 	var url := BASE_URL + "/rest/v1/rpc/" + function_name
 	var http := HTTPRequest.new()

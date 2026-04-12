@@ -1,0 +1,11 @@
+{
+  "feature": "agregar variable export llamada ship_tier de tipo int en scripts/ship.gd",
+  "date": "2026-04-11T14:02:23.436Z",
+  "steps": [
+    {
+      "step": "Add a new variable named 'ship_tier' of type int to the ship script in scripts/ship.gd.",
+      "status": "ok",
+      "ms": 229836
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "feature": "agregar variable export llamada ship_tier de tipo int en scripts/ship.gd",
+  "date": "2026-04-11T14:32:52.296Z",
+  "steps": [
+    {
+      "step": "1. Open the Godot game engine.",
+      "status": "ok",
+      "ms": 427940
+    },
+    {
+      "step": "2. Navigate to the 'File' menu and select 'New Scene' to create a new scene.",
+      "status": "ok",
+      "ms": 191713
+    },
+    {
+      "step": "3. Create a script file for your ship object in the Project Manager by right-clicking on the project folder, choosing 'New > Script', and saving it as 'ship.gd'.",
+      "status": "ok",
+      "ms": 190943
+    },
+    {
+      "step": "4. In the newly created script file, define an integer variable named 'ship_tier'. You can do this by adding the line of code: var ship_tier: int = 0",
+      "status": "ok",
+      "ms": 559742
+    },
+    {
+      "step": "5. Export the 'ship_tier' variable by appending the ': export' modifier to it like so: var ship_tier: int = 0",
+      "status": "ok",
+      "ms": 191780
+    }
+  ]
+}

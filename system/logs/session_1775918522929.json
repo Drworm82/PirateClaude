@@ -1,0 +1,16 @@
+{
+  "feature": "agregar variable export llamada ship_tier de tipo int en scripts/ship.gd",
+  "date": "2026-04-11T14:42:02.928Z",
+  "steps": [
+    {
+      "step": "Create scripts/ship.gd with an @export var ship_tier: int = 0",
+      "status": "ok",
+      "ms": 293216
+    },
+    {
+      "step": "Add function travel_to(island_id: String) to scripts/ship.gd",
+      "status": "ok",
+      "ms": 168048
+    }
+  ]
+}

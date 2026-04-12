@@ -1,0 +1,123 @@
+==================================================
+  CÓMO LEVANTAR EL PIPELINE DE IA — PirateWorld
+==================================================
+
+REQUISITOS PREVIOS
+------------------
+- Node.js instalado (verificar: node --version)
+- Ollama instalado y corriendo
+- Modelos descargados: qwen2.5-coder:7b
+
+--------------------------------------------------
+PASO 1 — Verificar que Ollama está corriendo
+--------------------------------------------------
+Abrir una terminal y ejecutar:
+
+    ollama list
+
+Debes ver qwen2.5-coder:7b en la lista.
+Si no está corriendo, ejecutar:
+
+    ollama serve
+
+Dejar esa terminal abierta.
+
+--------------------------------------------------
+PASO 2 — Verificar que el modelo responde
+--------------------------------------------------
+En otra terminal:
+
+    ollama run qwen2.5-coder:7b "responde solo: ok"
+
+Debe responder algo. Si tarda mucho o falla,
+reiniciar Ollama.
+
+--------------------------------------------------
+PASO 3 — Ir al directorio del pipeline
+--------------------------------------------------
+
+    cd C:\Users\Enrique\Documents\PirateClaude_AI
+
+--------------------------------------------------
+PASO 4 — Instalar dependencias (solo la primera vez
+          o si borras node_modules)
+--------------------------------------------------
+
+    npm install
+
+--------------------------------------------------
+PASO 5 — Levantar el pipeline
+--------------------------------------------------
+
+    node index.js
+
+O si tiene un script específico en package.json:
+
+    npm start
+
+--------------------------------------------------
+PASO 6 — Verificar que está funcionando
+--------------------------------------------------
+Debes ver en consola algo como:
+  ✓ Pipeline listo
+  ✓ Conectado a Ollama
+  ✓ Modelo: qwen2.5-coder:7b
+
+Si hay errores de conexión a Ollama, revisar
+que el servidor esté en el puerto correcto
+(por defecto: http://localhost:11434)
+
+--------------------------------------------------
+COMANDOS ÚTILES
+--------------------------------------------------
+
+Ver modelos disponibles:
+    ollama list
+
+Descargar modelo si falta:
+    ollama pull qwen2.5-coder:7b
+
+Verificar puerto de Ollama:
+    curl http://localhost:11434/api/tags
+
+Matar proceso Node si se cuelga (PowerShell):
+    Stop-Process -Name node -Force
+
+Reiniciar todo limpio:
+    1. Cerrar terminal del pipeline
+    2. ollama stop (si existe el comando)
+    3. Reabrir terminal
+    4. ollama serve
+    5. cd al directorio
+    6. node index.js
+
+--------------------------------------------------
+ESTRUCTURA DEL PIPELINE
+--------------------------------------------------
+PirateClaude_AI/
+  system/
+    llm.js          — cliente Ollama, modelo qwen2.5-coder:7b
+    planner.js      — genera pasos técnicos del sprint
+    senior_thinker.js — análisis de arquitectura
+    code_reviewer.js  — revisión de código generado
+    fixer.js          — corrección de errores
+    enhancer.js       — mejoras al código
+    validator.js      — valida GDScript (acepta fragmentos)
+    smart_patcher.js  — aplica cambios a archivos existentes
+    task_runner.js    — ejecuta tareas, action=create sobrescribe
+  index.js          — punto de entrada principal
+  PIRATEWORLD_CONTEXT.md — contexto del proyecto (mantener actualizado)
+
+--------------------------------------------------
+NOTAS IMPORTANTES
+--------------------------------------------------
+- El archivo PIRATEWORLD_CONTEXT.md debe estar
+  actualizado antes de correr el pipeline
+- El pipeline lee los archivos del proyecto
+  directamente desde la ruta configurada en index.js
+- Los modelos usan format: "json" — si el pipeline
+  falla con parse errors, reiniciar Ollama
+- Si un módulo falla silenciosamente, revisar
+  que el modelo esté respondiendo con JSON válido
+
+==================================================

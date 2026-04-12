@@ -44,6 +44,9 @@ func set_action_state(state: ActionState) -> void:
 			_btn_action.text = "Abordar"
 			_btn_action.disabled = false
 
+func get_action_state() -> int:
+	return int(_current_state)
+
 func _on_menu_pressed() -> void:
 	menu_pressed.emit()
 
