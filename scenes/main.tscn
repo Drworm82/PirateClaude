@@ -4,9 +4,9 @@
 [ext_resource type="PackedScene" uid="uid://dplm8vh7s28ok" path="res://scenes/virtual_joystick.tscn" id="2_0wfyh"]
 [ext_resource type="PackedScene" uid="uid://qlc7bp82xe2c" path="res://scenes/voyagehud.tscn" id="3_sugp2"]
 [ext_resource type="Script" uid="uid://bil7k0kyxcd1y" path="res://scripts/debug_overlay.gd" id="4_jyhfs"]
-[ext_resource type="PackedScene" uid="uid://1xikfm2semon" path="res://scenes/main_hud.tscn" id="5_tbgi4"]
+[ext_resource type="PackedScene" path="res://scenes/main_hud.tscn" id="5_tbgi4"]
 
-[node name="Main" type="Node" unique_id=1047061439]
+[node name="Main" type="Node2D" unique_id=1560938097]
 script = ExtResource("1_main")
 
 [node name="VirtualJoystick" parent="." unique_id=1979058788 instance=ExtResource("2_0wfyh")]

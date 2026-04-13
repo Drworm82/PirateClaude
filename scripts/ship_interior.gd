@@ -1,40 +1,53 @@
 extends Node2D
 class_name ShipInterior
 
-const SHIP_WIDTH: float  = 120.0
+const SHIP_WIDTH: float = 120.0
 const SHIP_HEIGHT: float = 220.0
-const SHIP_COLOR       := Color(0.35, 0.22, 0.12)
-const DECK_COLOR       := Color(0.55, 0.38, 0.22)
-const WATER_COLOR      := Color(0.10, 0.22, 0.36)
-const MAST_COLOR       := Color(0.25, 0.15, 0.08)
-const BARREL_COLOR     := Color(0.40, 0.28, 0.15)
+const SHIP_COLOR := Color(0.35, 0.22, 0.12)
+const DECK_COLOR := Color(0.55, 0.38, 0.22)
+const WATER_COLOR := Color(0.10, 0.22, 0.36)
+const MAST_COLOR := Color(0.25, 0.15, 0.08)
+const BARREL_COLOR := Color(0.40, 0.28, 0.15)
 
 @onready var player = $Player
 var joystick = null
 var _initialized: bool = false
 var ship_type: String = "lancha"
 var _camera: Camera2D = null
+var player_atlas_coord: Vector2i = Vector2i(28, 48)
+var _tilemap: TileMap = null
 
 func _ready() -> void:
-	# Desactivar la Camera2D del player — usamos la nuestra
 	var player_cam: Camera2D = player.get_node_or_null("Camera2D")
 	if player_cam:
 		player_cam.enabled = false
 
-	# Crear cámara propia centrada en el barco
+	# Ocultar sprite del player y usar tile
+	player.visible = false
+	
+	# Añadir TileMap dinámicamente si no existe
+	if not has_node("TileMap"):
+		var tm := TileMap.new()
+		tm.name = "TileMap"
+		var ts := ResourceLoader.load("res://assets/tilesets/tileset_dungeon.tres")
+		tm.tile_set = ts
+		tm.format = 2
+		add_child(tm)
+	
+	_tilemap = $TileMap
+
 	_camera = Camera2D.new()
 	_camera.position = Vector2.ZERO
 	_camera.zoom = Vector2(1.5, 1.5)
+	_camera.enabled = false # ← empieza desactivada
 	add_child(_camera)
-	_camera.make_current()
+	# NO make_current() aquí — lo hace enable_camera()
 
-	joystick = get_tree().get_first_node_in_group("joystick")
-	if joystick:
-		joystick.set_enabled(true)
+	# NO habilitar joystick aquí — lo hace enable_camera()
 
 	await get_tree().process_frame
 	player.position = Vector2(0.0, 20.0)
-	player.can_move = true
+	player.can_move = false # ← no puede moverse hasta que se activa
 	_initialized = true
 	queue_redraw()
 
@@ -44,10 +57,21 @@ func _physics_process(_delta: float) -> void:
 	if is_instance_valid(player):
 		player.position.x = clamp(player.position.x, -SHIP_WIDTH / 2.0 + 16.0, SHIP_WIDTH / 2.0 - 16.0)
 		player.position.y = clamp(player.position.y, -SHIP_HEIGHT / 2.0 + 16.0, SHIP_HEIGHT / 2.0 - 16.0)
+		
+		# Actualizar tile del player (convertir de coordenadas negativas a grid positivo)
+		var grid_origin := Vector2i(10, 15)  # Origen del grid en el centro
+		var tile_pos := Vector2i(
+			grid_origin.x + int(player.position.x / 32),
+			grid_origin.y + int(player.position.y / 32)
+		)
+		if _tilemap:
+			_tilemap.set_cell(0, tile_pos, 0, player_atlas_coord)
 
 func _draw() -> void:
 	if not _initialized:
 		return
+
+	GameState.debug_log("ship_draw: visible=" + str(visible) + " cam=" + str(_camera.enabled if is_instance_valid(_camera) else "null"))
 
 	# Fondo océano
 	draw_rect(Rect2(-400, -600, 800, 1200), WATER_COLOR)
@@ -67,6 +91,7 @@ func _draw() -> void:
 	draw_colored_polygon(hull, SHIP_COLOR)
 
 	# Cubierta
+	# Dibujar solo la cubierta (suelo) para que el jugador no flote en el vacío
 	var deck := Rect2(-SHIP_WIDTH / 2.0 + 10.0, -SHIP_HEIGHT / 2.0 + 50.0,
 					   SHIP_WIDTH - 20.0, SHIP_HEIGHT - 80.0)
 	draw_rect(deck, DECK_COLOR)
@@ -109,6 +134,7 @@ func _draw_barrel(pos: Vector2) -> void:
 func disable_camera() -> void:
 	if is_instance_valid(_camera):
 		_camera.enabled = false
+	visible = false
 
 func enable_camera() -> void:
 	if is_instance_valid(_camera):

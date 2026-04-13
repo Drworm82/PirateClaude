@@ -992,76 +992,82 @@
       ],
       "funcs": [
         {
+          "name": "_notification",
+          "params": "what: int",
+          "returns": "void:",
+          "line": 26
+        },
+        {
           "name": "_ready",
           "params": "",
           "returns": "void:",
-          "line": 26
+          "line": 33
         },
         {
           "name": "_physics_process",
           "params": "_delta: float",
           "returns": "void:",
-          "line": 61
+          "line": 68
         },
         {
           "name": "_draw",
           "params": "",
           "returns": "void:",
-          "line": 88
+          "line": 95
         },
         {
           "name": "setup",
           "params": "p_seed: int, pos: Vector2",
           "returns": "void:",
-          "line": 94
+          "line": 101
         },
         {
           "name": "_center_camera",
           "params": "",
           "returns": "void:",
-          "line": 98
+          "line": 105
         },
         {
           "name": "_on_player_boarded",
           "params": "_destination: String",
           "returns": "void:",
-          "line": 106
+          "line": 113
         },
         {
           "name": "_on_board_pressed",
           "params": "",
           "returns": "void:",
-          "line": 109
+          "line": 116
         },
         {
           "name": "_show_destination_menu",
           "params": "",
           "returns": "void:",
-          "line": 112
+          "line": 119
         },
         {
           "name": "_on_destination_selected",
           "params": "destination: String",
           "returns": "void:",
-          "line": 125
+          "line": 135
         },
         {
           "name": "_on_destination_cancelled",
           "params": "",
           "returns": "void:",
-          "line": 135
+          "line": 146
         },
         {
           "name": "_on_destination_menu_closed",
           "params": "",
           "returns": "void:",
-          "line": 141
+          "line": 152
         },
         {
           "name": "_exit_dungeon",
           "params": "",
           "returns": "void:",
-          "line": 147
+          "line": 161
         }
       ],
       "stateVars": [
@@ -1145,7 +1151,8 @@
       ],
       "autoloadRefs": [
         "VoyageManager",
-        "GameManager"
+        "GameManager",
+        "GameState"
       ],
       "onready": [
         {
@@ -1157,9 +1164,10 @@
       "emits": [
         "destination_chosen",
         "player_exited_dungeon",
+        "player_exited_dungeon",
         "player_exited_dungeon"
       ],
-      "loc": 150,
+      "loc": 164,
       "summary": "extends Node2D\nclass_name Dungeon\n\nsignal player_exited_dungeon\nsignal destination_chosen(destination: String)\n\n@onready var player = $Player\nvar joystick = null\n\nconst OCEAN_COLOR := Color(0.102, 0.227, 0.361)\nconst LAND_COLOR := Color(0.176, 0.416, 0.31)\nconst EXIT_ZONE_COLOR := Color(0.957, 0.635, 0.38)\n\nconst TILE_SIZE := 32\nconst ISLAND_SIZE_TILES := 20\nconst DUNGEON_WIDTH := 40\nconst DUNGEON_HEIGHT := 40\n\nvar island_seed: int = 0\nvar island_pos: Vector2 = Vector2.ZERO\nvar land_rect: Rect2\n"
     },
     {
@@ -1478,61 +1486,61 @@
           "name": "start_travel",
           "params": "destination: String",
           "returns": "void:",
-          "line": 138
+          "line": 140
         },
         {
           "name": "_on_enter_island",
           "params": "",
           "returns": "void:",
-          "line": 147
+          "line": 149
         },
         {
           "name": "_draw",
           "params": "",
           "returns": "void:",
-          "line": 152
+          "line": 154
         },
         {
           "name": "update_player_position",
           "params": "_gps_lat: float, _gps_lng: float",
           "returns": "void:",
-          "line": 246
+          "line": 248
         },
         {
           "name": "_on_player_moved",
           "params": "lat: float, lng: float",
           "returns": "void:",
-          "line": 250
+          "line": 252
         },
         {
           "name": "_load_islands_from_supabase",
           "params": "",
           "returns": "void:",
-          "line": 260
+          "line": 262
         },
         {
           "name": "_center_on_home_island",
           "params": "",
           "returns": "void:",
-          "line": 301
+          "line": 303
         },
         {
           "name": "_exit_tree",
           "params": "",
           "returns": "void:",
-          "line": 312
+          "line": 320
         },
         {
           "name": "_on_voyage_updated",
           "params": "seconds_remaining: int, doblones_remaining: int, progress: float",
           "returns": "void:",
-          "line": 317
+          "line": 325
         },
         {
           "name": "_update_voyage_hud",
           "params": "seconds_remaining: int, doblones_remaining: int",
           "returns": "void:",
-          "line": 332
+          "line": 340
         }
       ],
       "stateVars": [
@@ -1677,7 +1685,7 @@
       "emits": [
         "travel_completed"
       ],
-      "loc": 335,
+      "loc": 343,
       "summary": "extends Node2D\nclass_name GPSMap\n\nsignal player_entered_island(island_pos: Vector2)\nsignal travel_completed\n\nconst OCEAN_COLOR := Color(0.102, 0.227, 0.361)\nconst PLAYER_COLOR := Color(0.4, 0.6, 0.9)\nconst ISLAND_COLOR := Color(0.176, 0.416, 0.31)\nconst ISLAND_RADIUS := 40.0\nconst PLAYER_SPEED := 150.0\nconst TRAVEL_SPEED := 80.0\n\nconst SCALE: float = 10000.0\n\nvar _player_lat: float = 0.0\nvar _player_lng: float = 0.0\nvar _map_center: Vector2\n\nconst DESTINATIONS := {\n  \"isla_norte\": {\"pos\": Vector2"
     },
     {
@@ -1918,19 +1926,19 @@
           "name": "_ready",
           "params": "",
           "returns": "void:",
-          "line": 19
+          "line": 20
         },
         {
           "name": "_setup_gps_view",
           "params": "",
           "returns": "void:",
-          "line": 41
+          "line": 42
         },
         {
           "name": "_enter_ship_interior",
           "params": "",
           "returns": "void:",
-          "line": 51
+          "line": 52
         },
         {
           "name": "_exit_ship_interior",
@@ -1942,109 +1950,109 @@
           "name": "_toggle_ship_view",
           "params": "",
           "returns": "void:",
-          "line": 76
+          "line": 79
         },
         {
           "name": "_on_voyage_updated",
           "params": "_seconds: int, _doblones: int, _progress: float",
           "returns": "void:",
-          "line": 92
+          "line": 102
         },
         {
           "name": "_on_player_entered_island",
           "params": "island_pos: Vector2",
           "returns": "void:",
-          "line": 102
+          "line": 120
         },
         {
           "name": "_on_destination_chosen",
           "params": "destination: String",
           "returns": "void:",
-          "line": 132
+          "line": 150
         },
         {
           "name": "_on_player_exited_dungeon",
           "params": "",
           "returns": "void:",
-          "line": 139
+          "line": 158
         },
         {
           "name": "_on_travel_completed",
           "params": "",
           "returns": "void:",
-          "line": 152
+          "line": 175
         },
         {
           "name": "_on_result_closed",
           "params": "",
           "returns": "void:",
-          "line": 169
+          "line": 192
         },
         {
           "name": "open_map",
           "params": "",
           "returns": "void:",
-          "line": 175
+          "line": 198
         },
         {
           "name": "_on_sail_pressed",
           "params": "",
           "returns": "void:",
-          "line": 182
+          "line": 205
         },
         {
           "name": "_input",
           "params": "event: InputEvent",
           "returns": "void:",
-          "line": 191
+          "line": 218
         },
         {
           "name": "_on_action_pressed",
           "params": "state: int",
           "returns": "void:",
-          "line": 196
+          "line": 223
         },
         {
           "name": "update_action_state",
           "params": "state: int",
           "returns": "void:",
-          "line": 214
+          "line": 241
         },
         {
           "name": "_on_menu_pressed",
           "params": "",
           "returns": "void:",
-          "line": 219
+          "line": 250
         },
         {
           "name": "_on_map_pressed",
           "params": "",
           "returns": "void:",
-          "line": 222
+          "line": 253
         },
         {
           "name": "_on_voyage_arrived",
           "params": "destination_id: String",
           "returns": "void:",
-          "line": 228
+          "line": 259
         },
         {
           "name": "_on_arrival_go_ashore",
           "params": "",
           "returns": "void:",
-          "line": 241
+          "line": 272
         },
         {
           "name": "_on_arrival_stay",
           "params": "",
           "returns": "void:",
-          "line": 259
+          "line": 296
         },
         {
           "name": "_on_arrival_set_sail",
           "params": "",
           "returns": "void:",
-          "line": 262
+          "line": 299
         }
       ],
       "stateVars": [
@@ -2089,6 +2097,12 @@
           "type": "CanvasLayer",
           "default": "null",
           "line": 11
+        },
+        {
+          "name": "_last_action_state",
+          "type": "int",
+          "default": "-1",
+          "line": 12
         }
       ],
       "consts": [
@@ -2127,8 +2141,8 @@
       "onready": [],
       "connects": [],
       "emits": [],
-      "loc": 263,
-      "summary": "extends Node\nclass_name MainController\n\nenum View {GPS, DUNGEON, SHIP}\nvar current_view: View = View.GPS\nvar gps_map: GPSMap\nvar current_dungeon: Dungeon\nvar current_ship_interior: ShipInterior = null\nvar current_destination: String = \"\"\nvar travel_result_ui: Node = null\nvar main_hud: CanvasLayer = null\n\nconst TRAVEL_COSTS := {\n  \"isla_norte\": 10,\n  \"isla_este\": 15,\n  \"puerto_neutral\": 20\n}\n\nfunc _ready() -> void:\n  add_to_group(\"main\")\n\n  await GameManager.initialize()\n  await VoyageManager.check_act"
+      "loc": 300,
+      "summary": "extends Node\nclass_name MainController\n\nenum View {GPS, DUNGEON, SHIP}\nvar current_view: View = View.GPS\nvar gps_map: GPSMap\nvar current_dungeon: Dungeon\nvar current_ship_interior: ShipInterior = null\nvar current_destination: String = \"\"\nvar travel_result_ui: Node = null\nvar main_hud: CanvasLayer = null\nvar _last_action_state: int = -1\n\nconst TRAVEL_COSTS := {\n  \"isla_norte\": 10,\n  \"isla_este\": 15,\n  \"puerto_neutral\": 20\n}\n\nfunc _ready() -> void:\n  add_to_group(\"main\")\n\n  await GameManager.initialize"
     },
     {
       "path": "scripts/main_hud.gd",
@@ -2170,52 +2184,58 @@
           "line": 28
         },
         {
-          "name": "_on_menu_pressed",
+          "name": "get_action_state",
           "params": "",
-          "returns": "void:",
+          "returns": "int:",
           "line": 47
         },
         {
-          "name": "_on_work_pressed",
+          "name": "_on_menu_pressed",
           "params": "",
           "returns": "void:",
           "line": 50
         },
         {
-          "name": "_on_inventory_pressed",
+          "name": "_on_work_pressed",
           "params": "",
           "returns": "void:",
           "line": 53
         },
         {
-          "name": "_on_map_pressed",
+          "name": "_on_inventory_pressed",
           "params": "",
           "returns": "void:",
           "line": 56
         },
         {
-          "name": "_on_action_pressed",
+          "name": "_on_map_pressed",
           "params": "",
           "returns": "void:",
           "line": 59
         },
         {
+          "name": "_on_action_pressed",
+          "params": "",
+          "returns": "void:",
+          "line": 62
+        },
+        {
           "name": "_input",
           "params": "event: InputEvent",
           "returns": "void:",
-          "line": 63
+          "line": 66
         },
         {
           "name": "disable_for_menu",
           "params": "",
           "returns": "void:",
-          "line": 96
+          "line": 99
         },
         {
           "name": "enable_after_menu",
           "params": "",
           "returns": "void:",
-          "line": 100
+          "line": 103
         }
       ],
       "stateVars": [
@@ -2259,7 +2279,7 @@
       "onready": [],
       "connects": [],
       "emits": [],
-      "loc": 102,
+      "loc": 105,
       "summary": "extends CanvasLayer\r\n\r\nsignal menu_pressed\r\nsignal work_pressed\r\nsignal inventory_pressed\r\nsignal map_pressed\r\nsignal action_pressed\r\n\r\nenum ActionState {\r\n  NONE,\r\n  ENTER_ISLAND,\r\n  SAIL,\r\n  VIEW_SHIP,\r\n  BOARD,\r\n}\r\n\r\nvar _current_state: ActionState = ActionState.NONE\r\nvar _btn_action: Button\r\nvar input_enabled: bool = true\r\n\r\nfunc _ready() -> void:\r\n  add_to_group(\"main_hud\")\r\n  _btn_action = get_node(\"BottomBar/BottomBox/BtnAction\")\r\n  var safe_top: int = DisplayServer.get_display_safe_area().positi"
     },
     {
@@ -3169,7 +3189,8 @@
     },
     "scripts/dungeon.gd": {
       "deps": [
-        "autoloads/VoyageManager.gd"
+        "autoloads/VoyageManager.gd",
+        "autoloads/GameState.gd"
       ],
       "signals": [
         "player_exited_dungeon",
@@ -3178,6 +3199,7 @@
       "connects": [],
       "emits": [
         "destination_chosen",
+        "player_exited_dungeon",
         "player_exited_dungeon",
         "player_exited_dungeon"
       ],
@@ -3420,5 +3442,5 @@
       "usedByScenes": []
     }
   },
-  "scannedAt": "2026-04-12T16:26:15.066Z"
+  "scannedAt": "2026-04-12T20:22:59.800Z"
 }

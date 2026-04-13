@@ -1,12 +1,13 @@
 const fs = require("fs");
 const path = require("path");
 
-const { scanProject } = require("./scanner");
-const { buildContext } = require("./context_builder");
-const { runLLM } = require("./llm");
+// ✅ rutas correctas según tu estructura
+const { buildIndex } = require("./system/scanner");
+const { buildContext } = require("./system/context_builder");
+const { runLLM } = require("./system/llm");
 
 // === CONFIG ===
-const PROJECT_PATH = path.resolve(__dirname, "..");
+const PROJECT_PATH = __dirname;
 
 // === HELPERS ===
 
@@ -65,12 +66,17 @@ function detectGodScripts(files) {
 async function runDiagnosis() {
   console.log("🔍 Running PirateWorld AI Diagnosis...\n");
 
-  const files = scanProject(PROJECT_PATH);
+  // ✅ usa buildIndex (no scanProject)
+  const indexData = buildIndex(PROJECT_PATH);
+
+  // extrae rutas reales
+  const files = indexData.index.map(e => e.path);
 
   const gdFiles = files.filter(f => f.endsWith(".gd"));
   const jsFiles = files.filter(f => f.endsWith(".js"));
 
-  const context = buildContext(gdFiles);
+  // ✅ FIX: buildContext necesita string, no array
+  const context = buildContext("full project diagnosis");
 
   // === STATIC ANALYSIS ===
 
@@ -125,7 +131,7 @@ ${context.slice(0, 15000)}
 
 module.exports = { runDiagnosis };
 
-// run directamente si se ejecuta solo
+// run directo
 if (require.main === module) {
   runDiagnosis();
 }

@@ -68,12 +68,13 @@ func start_voyage(destination_island_id: String) -> void:
 
 	# ── Calcular doblones a embarcar ──────────────────────────────────────
 	# Usar onboard si ya hay un viaje activo, si no tomar de doblones en tierra
-	var doblones: int = GameManager.doblones_onboard
-	if doblones <= 0:
+	var doblones: int = GameState.get_doblones_onboard()
+	if doblones == 0:
 		doblones = GameManager.doblones
-	# Mover todos los doblones disponibles al barco
-	GameManager.doblones_onboard = doblones
-	GameManager.doblones = 0
+		GameManager.doblones_onboard = doblones
+		GameManager.doblones = 0
+
+	doblones = mini(doblones, 999999)
 
 	var payload: Dictionary = {
 		"player_id": GameState.get_player_id(),
@@ -92,6 +93,7 @@ func start_voyage(destination_island_id: String) -> void:
 	var response: Array = await http.request_completed
 	var body: String = response[3].get_string_from_utf8()
 	var data: Variant = JSON.parse_string(body)
+	GameState.debug_log("voyage insert code:" + str(response[1]) + " data:" + str(data).left(60))
 
 	if data is Array and data.size() > 0:
 		active_voyage = {

@@ -32,7 +32,8 @@ func _on_gps_location(lat: float, lng: float) -> void:
 		_sync_home_position()
 	else:
 		_pending_gps_sync = true
-	emit_signal("player_position_changed", lat, lng)
+	if VoyageManager.active_voyage.is_empty():
+		emit_signal("player_position_changed", lat, lng)
 
 func _on_gps_error(reason: String) -> void:
 	emit_signal("home_position_ready", home_lat, home_lng)

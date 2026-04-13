@@ -18,9 +18,9 @@ var _player_lng: float = 0.0
 var _map_center: Vector2
 
 const DESTINATIONS := {
-	"isla_norte": {"pos": Vector2(200, 150), "name": "Isla Enana", "cost": 10},
-	"isla_este": {"pos": Vector2(800, 200), "name": "Isla del Cocinero", "cost": 15},
-	"puerto_neutral": {"pos": Vector2(640, 600), "name": "Puerto Loguetown", "cost": 20}
+	"isla_norte": {"pos": Vector2(0.3, 0.2), "name": "Isla Enana", "cost": 10},
+	"isla_este": {"pos": Vector2(0.7, 0.25), "name": "Isla del Cocinero", "cost": 15},
+	"puerto_neutral": {"pos": Vector2(0.5, 0.7), "name": "Puerto Loguetown", "cost": 20}
 }
 
 var player_screen_pos := Vector2(360, 640)
@@ -30,6 +30,8 @@ var island_knowledge: Dictionary = {}
 var nearby_island: Dictionary = {}
 var initialized := false
 var _map_initialized := false
+var _debug_count := 0
+var _draw_count := 0
 var traveling: bool = false
 var travel_target: Vector2 = Vector2.ZERO
 var travel_origin: Vector2 = Vector2.ZERO
@@ -64,10 +66,11 @@ func _on_home_ready(lat: float, lng: float) -> void:
 	_player_lat = lat
 	_player_lng = lng
 	_map_center = get_viewport_rect().size / 2.0
-	player_screen_pos = _map_center
 	if islands.size() > 0:
 		_place_islands_relative()
 		_center_on_home_island()
+	else:
+		player_screen_pos = _map_center
 	queue_redraw()
 
 
@@ -97,48 +100,60 @@ func _physics_process(delta: float) -> void:
 	if not visible:
 		return
 	if not _map_initialized:
-		var size = get_viewport_rect().size
-		if size.x > 0 and size.y > 0:
-			_map_center = size / 2.0
-			player_screen_pos = _map_center
-			_map_initialized = true
-			_place_islands_relative()
-			queue_redraw()
+		if _player_lat != 0.0:
+			var size = get_viewport_rect().size
+			if size.x > 0 and size.y > 0:
+				_map_center = size / 2.0
+				player_screen_pos = _map_center
+				GameState.debug_log("init: center=" + str(_map_center))
+				_map_initialized = true
+				_place_islands_relative()
+				queue_redraw()
+		elif _debug_count < 3:
+			_debug_count += 1
+			GameState.debug_log("waiting GPS: _player_lat=" + str(_player_lat))
 	var main = get_tree().get_first_node_in_group("main")
-	if not traveling:
-		nearby_island = {}
-		for island in islands:
-			if player_screen_pos.distance_to(island.pos) < 80.0:
-				nearby_island = island
-				break
-		# Solo actualizar Action Button si NO hay viaje activo en VoyageManager
-		if VoyageManager.active_voyage.is_empty():
-			if not nearby_island.is_empty():
-				main.update_action_state(1)
+
+	if main:
+		if not traveling:
+			nearby_island = {}
+			var screen_size := get_viewport_rect().size
+			var detect_radius: float = screen_size.x * 0.1  # 10% del ancho
+			for island in islands:
+				if player_screen_pos.distance_to(island.pos) < detect_radius:
+					nearby_island = island
+					break
+
+			if VoyageManager.active_voyage.is_empty():
+				if not nearby_island.is_empty():
+					main.update_action_state(1)
+				else:
+					main.update_action_state(2)
 			else:
-				main.update_action_state(2)
+				main.update_action_state(3)
 		else:
-			main.update_action_state(3)  # viaje activo → Ver barco
-	else:
-		main.update_action_state(3)
-		var dir := (travel_target - player_screen_pos).normalized()
-		var dist: float = player_screen_pos.distance_to(travel_target)
-		if dist < 5.0:
-			traveling = false
-			player_screen_pos = travel_target
-			travel_destination_name = ""
-			travel_total_distance = 0.0
-			emit_signal("travel_completed")
-		else:
-			player_screen_pos += dir * TRAVEL_SPEED * delta
+			main.update_action_state(3)
+			var dir := (travel_target - player_screen_pos).normalized()
+			var dist: float = player_screen_pos.distance_to(travel_target)
+			if dist < 5.0:
+				traveling = false
+				player_screen_pos = travel_target
+				travel_destination_name = ""
+				travel_total_distance = 0.0
+				emit_signal("travel_completed")
+			else:
+				player_screen_pos += dir * TRAVEL_SPEED * delta
 
 	queue_redraw()
 
 
 func start_travel(destination: String) -> void:
 	if destination in DESTINATIONS:
+		var dest_pos: Vector2 = DESTINATIONS[destination].pos
+		# Convertir coordenadas relativas (0.0-1.0) a píxeles
+		var screen_size := get_viewport_rect().size
+		travel_target = Vector2(dest_pos.x * screen_size.x, dest_pos.y * screen_size.y)
 		travel_origin = player_screen_pos
-		travel_target = DESTINATIONS[destination].pos
 		travel_destination_name = DESTINATIONS[destination].name
 		travel_total_distance = player_screen_pos.distance_to(travel_target)
 		traveling = true
@@ -152,7 +167,9 @@ func _on_enter_island() -> void:
 func _draw() -> void:
 	if not initialized:
 		return
-	draw_rect(Rect2(Vector2(-2000, -2000), Vector2(6000, 6000)), OCEAN_COLOR)
+	var screen_size := get_viewport_rect().size
+	var map_rect := Rect2(Vector2.ZERO, screen_size)
+	draw_rect(map_rect, OCEAN_COLOR)
 	for island in islands:
 		var color: Color
 		var radius: float = ISLAND_RADIUS
@@ -229,7 +246,7 @@ func _draw() -> void:
 
 		var bar_x: float = 20.0
 		var bar_y: float = 85.0
-		var bar_w: float = 300.0
+		var bar_w: float = get_viewport_rect().size.x * 0.4
 		var bar_h: float = 12.0
 
 		draw_rect(Rect2(bar_x, bar_y, bar_w, bar_h), Color(0.2, 0.2, 0.2, 0.8))
@@ -250,10 +267,15 @@ func update_player_position(_gps_lat: float, _gps_lng: float) -> void:
 func _on_player_moved(lat: float, lng: float) -> void:
 	if traveling:
 		return
+	if not VoyageManager.active_voyage.is_empty():
+		return
 	_player_lat = lat
 	_player_lng = lng
-	player_screen_pos = _map_center
+	GameState.debug_log("_on_player_moved: lat=" + str(lat) + " lng=" + str(lng))
 	_place_islands_relative()
+	GameState.debug_log("  _map_center=" + str(_map_center) + " player=" + str(player_screen_pos))
+	player_screen_pos = _map_center
+	GameState.debug_log("  after player=" + str(player_screen_pos))
 	queue_redraw()
 
 
@@ -326,6 +348,7 @@ func _on_voyage_updated(seconds_remaining: int, doblones_remaining: int, progres
 			_player_lat = lerpf(origin["lat"], dest["lat"], progress)
 			_player_lng = lerpf(origin["lng"], dest["lng"], progress)
 			_place_islands_relative()
+			player_screen_pos = _map_center
 			queue_redraw()
 
 

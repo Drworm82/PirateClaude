@@ -8,8 +8,8 @@ signal location_error(reason: String)
 enum State { IDLE, WAITING_PERMISSION, ACTIVE, UNAVAILABLE }
 
 var state: State = State.IDLE
-var last_lat: float = 19.4326
-var last_lng: float = -99.1332
+var last_lat: float = 0.0
+var last_lng: float = 0.0
 
 var _location_manager = null
 var _is_android: bool = false

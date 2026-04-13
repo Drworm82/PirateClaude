@@ -25,17 +25,50 @@ func _ready() -> void:
 
 	$Panel/MapDisplay.overlay_ref = self
 
-	# Forzar Panel a ocupar toda la pantalla en cualquier orientación
+	# Ajustar panel inmediatamente
 	_fit_panel_to_screen()
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_SIZE_CHANGED:
+		_fit_panel_to_screen()
 
 func _fit_panel_to_screen() -> void:
 	var vp_size: Vector2 = get_viewport().get_visible_rect().size
 	var panel: Panel = $Panel
+	
+	# Usaranchors para llenar el espacio
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	panel.offset_left   = 0
-	panel.offset_top    = 0
-	panel.offset_right  = 0
-	panel.offset_bottom = 0
+	
+	# Aplicar padding con offsets
+	var padding: float = 20.0
+	panel.offset_left = padding
+	panel.offset_top = padding + _safe_area_offset
+	panel.offset_right = -padding
+	panel.offset_bottom = -padding
+	
+	# Ajustar tabs
+	var tabs: HBoxContainer = $Panel/Tabs
+	tabs.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	tabs.offset_left = padding
+	tabs.offset_top = 10.0
+	tabs.offset_right = -padding
+	tabs.offset_bottom = 50.0
+	
+	# Ajustar MapDisplay - ocupa el espacio restante
+	var map_display: Control = $Panel/MapDisplay
+	map_display.set_anchors_preset(Control.PRESET_FULL_RECT)
+	map_display.offset_left = padding
+	map_display.offset_top = tabs.offset_bottom + 10.0
+	map_display.offset_right = -padding
+	map_display.offset_bottom = -padding
+	
+	# Ajustar botón cerrar
+	var btn_cerrar: Button = $Panel/BtnCerrar
+	btn_cerrar.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	btn_cerrar.offset_left = -padding - 50.0
+	btn_cerrar.offset_top = 10.0
+	btn_cerrar.offset_right = -padding
+	btn_cerrar.offset_bottom = 45.0
 
 func _set_mode(mode: MapMode) -> void:
 	current_mode = mode

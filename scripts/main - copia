@@ -56,16 +56,20 @@ func _enter_ship_interior() -> void:
 	current_ship_interior = scene.instantiate()
 	add_child(current_ship_interior)
 	current_ship_interior.enter_ship("lancha")
-	# Siempre empieza oculto — se muestra solo al presionar "Ver barco"
-	current_ship_interior.disable_camera()
-	current_ship_interior.visible = false
-	# NO cambiar gps_map.visible ni current_view aquí
+	GameState.debug_log("ship cam current: " + str(current_ship_interior._camera.is_current()))
+	# Ocultar GPS mientras se ve el interior
+	if is_instance_valid(gps_map):
+		gps_map.visible = false
+	current_view = View.SHIP
 
 func _exit_ship_interior() -> void:
 	if is_instance_valid(current_ship_interior):
-		current_ship_interior.disable_camera()
+		# Desactivar Camera2D antes de queue_free para evitar render fantasma
+		var ship_cam: Camera2D = current_ship_interior.get_node_or_null("Camera2D")
+		if ship_cam:
+			ship_cam.enabled = false
 		current_ship_interior.visible = false
-		current_ship_interior.exit_ship()
+		current_ship_interior.exit_ship()  # llama queue_free internamente
 		current_ship_interior = null
 	if is_instance_valid(gps_map):
 		gps_map.visible = true
@@ -76,7 +80,10 @@ func _toggle_ship_view() -> void:
 	if not is_instance_valid(current_ship_interior):
 		return
 	if current_view == View.SHIP:
-		current_ship_interior.disable_camera()
+		# Volver al mapa GPS — desactivar cámara del interior antes de ocultarlo
+		var ship_cam: Camera2D = current_ship_interior.get_node_or_null("Camera2D")
+		if ship_cam:
+			ship_cam.enabled = false
 		current_ship_interior.visible = false
 		if is_instance_valid(gps_map):
 			gps_map.visible = true
@@ -85,31 +92,28 @@ func _toggle_ship_view() -> void:
 		# Ver interior del barco — ocultar GPS y activar cámara del interior
 		if is_instance_valid(gps_map):
 			gps_map.visible = false
-		if is_instance_valid(current_dungeon):
-			current_dungeon.visible = false
 		current_ship_interior.visible = true
-		current_ship_interior.enable_camera()
+		var ship_cam: Camera2D = current_ship_interior.get_node_or_null("Camera2D")
+		if ship_cam:
+			ship_cam.enabled = true
+			ship_cam.make_current()
 		current_view = View.SHIP
 
 func _on_voyage_updated(_seconds: int, _doblones: int, _progress: float) -> void:
-	GameState.debug_log("voyage_upd: dungeon=" + str(is_instance_valid(current_dungeon)) + " vis=" + str(current_dungeon.visible if is_instance_valid(current_dungeon) else "N/A") + " view=" + str(current_view))
-	if is_instance_valid(current_dungeon):
+	if is_instance_valid(current_dungeon) and current_dungeon.visible:
 		current_dungeon.visible = false
-		GameState.debug_log("dungeon hidden: " + str(current_dungeon.visible if is_instance_valid(current_dungeon) else "freed"))
+		var boat_sprite = current_dungeon.get_node_or_null("Boat/Sprite2D")
+		if boat_sprite:
+			boat_sprite.visible = false
 		var dungeon_cam: Camera2D = current_dungeon.get_node_or_null("Player/Camera2D")
 		if dungeon_cam:
 			dungeon_cam.enabled = false
 			GameState.debug_log("dungeon cam disabled: " + str(dungeon_cam.enabled))
 		else:
 			GameState.debug_log("dungeon cam NOT FOUND")
-	# Crear interior del barco la primera vez si no existe
+	# Crear interior del barco la primera vez
 	if not is_instance_valid(current_ship_interior):
 		_enter_ship_interior()
-	# Mantenerlo oculto — solo se muestra cuando el jugador presiona "Ver barco"
-	else:
-		if current_view != View.SHIP:
-			current_ship_interior.disable_camera()
-			current_ship_interior.visible = false
 	# Setear Action Button a "Ver barco" durante el viaje
 	update_action_state(3)
 
@@ -149,13 +153,6 @@ func _on_destination_chosen(destination: String) -> void:
 	var cost: int = TRAVEL_COSTS.get(destination, 10)
 	if GameManager.doblones < cost:
 		return
-	
-	# Destruir dungeon completamente al elegir destino para evitar que se muestre durante el viaje
-	# (el Boat del dungeon tiene texturas diferentes al punto del GPS)
-	if is_instance_valid(current_dungeon):
-		current_dungeon.queue_free()
-		current_dungeon = null
-
 	GameManager.doblones -= cost
 
 func _on_player_exited_dungeon() -> void:
@@ -207,6 +204,10 @@ func open_map() -> void:
 
 func _on_sail_pressed() -> void:
 	main_hud.disable_for_menu()
+	if is_instance_valid(current_dungeon):
+		var boat_sprite = current_dungeon.get_node_or_null("Boat/Sprite2D")
+		if boat_sprite:
+			boat_sprite.visible = false
 	var menu: CanvasLayer = preload("res://scenes/destinationmenu.tscn").instantiate()
 	add_child(menu)
 	menu.menu_closed.connect(func():

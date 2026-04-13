@@ -22,13 +22,7 @@ var land_rect: Rect2
 var exit_zone_rect: Rect2
 var destination_menu: CanvasLayer = null
 var _exit_enabled := true
-
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_VISIBILITY_CHANGED:
-		if not visible:
-			$Boat/Sprite2D.visible = false
-		else:
-			$Boat/Sprite2D.visible = true
+var player_atlas_coord: Vector2i = Vector2i(28, 48)
 
 func _ready() -> void:
 	joystick = get_tree().get_first_node_in_group("joystick")
@@ -58,6 +52,15 @@ func _ready() -> void:
 	cam.reset_smoothing()
 	cam.force_update_scroll()
 
+	# Ocultar el nodo Boat completo para que no se duplique con la textura de la isla.
+	# El nodo sigue activo para detectar proximidad, pero es invisible.
+	if has_node("Boat"):
+		$Boat.hide()
+
+	# Ocultar el sprite del player en vista dungeon y usar tile del TileMap
+	if has_node("Player"):
+		$Player.visible = false
+
 	$TileMap.clear()
 	$Boat.player_boarded.connect(_on_player_boarded)
 	$Boat.set_player_ref(player)
@@ -72,6 +75,13 @@ func _physics_process(_delta: float) -> void:
 		return
 	if not _exit_enabled:
 		return
+
+	# Actualizar posición del tile del player
+	var player_tile_pos := Vector2i(
+		int(player.position.x / TILE_SIZE),
+		int(player.position.y / TILE_SIZE)
+	)
+	$TileMap.set_cell(0, player_tile_pos, 0, player_atlas_coord)
 
 	var exit_center := Vector2(
 		DUNGEON_WIDTH * TILE_SIZE / 2.0,
@@ -117,9 +127,6 @@ func _on_board_pressed() -> void:
 	_on_player_boarded("")
 
 func _show_destination_menu() -> void:
-	var boat_sprite = get_node_or_null("Boat/Sprite2D")
-	if boat_sprite:
-		boat_sprite.visible = false
 	if GameManager.ship_hp <= 0:
 		return
 
